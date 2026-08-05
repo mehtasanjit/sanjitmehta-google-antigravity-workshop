@@ -1,0 +1,13 @@
+{
+  "name": "conductor",
+  "owner": {
+    "name": "Conductor"
+  },
+  "plugins": [
+    {
+      "name": "conductor",
+      "source": "./",
+      "description": "Conductor is a set of modular AI agent skills for Claude Code that enables Spec-Driven Development."
+    }
+  ]
+}

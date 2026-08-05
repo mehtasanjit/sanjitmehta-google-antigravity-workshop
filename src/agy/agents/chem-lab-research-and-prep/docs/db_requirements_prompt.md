@@ -1,0 +1,1 @@
+Write a concise database requirements document for a chemistry laboratory assistant. Cover compounds and inventory, approved laboratory procedures, required equipment, and safety documents, including the initial aspirin and acetaminophen exercise data. Describe the required data only, not how to implement the database.

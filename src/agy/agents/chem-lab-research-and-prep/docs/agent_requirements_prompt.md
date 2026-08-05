@@ -1,0 +1,1 @@
+Write a concise requirements document for a multi-agent chemistry laboratory assistant. It should help students research compounds, find academic literature, retrieve approved laboratory procedures, check laboratory readiness, review safety guidance, and produce one sourced preparation sheet. Describe only what the assistant must do, not how to implement it.
