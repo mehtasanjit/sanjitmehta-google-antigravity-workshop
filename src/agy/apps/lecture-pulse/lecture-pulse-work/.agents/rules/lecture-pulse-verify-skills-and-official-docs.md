@@ -2,7 +2,7 @@
 
 ## Scope
 
-Apply this rule only to work under `src/samples/agy/lecture-pulse/**`.
+Strictly apply this rule only to work under the current project, workspace.
 
 ## Rule
 
