@@ -1,5 +1,19 @@
 # Download Google Agents CLI Skills
 
+## Preferred installation
+
+If installing and using `uvx` and the Agents CLI binary is permitted, follow the official [Agents CLI Getting Started guide](https://google.github.io/agents-cli/guide/getting-started/).
+
+```bash
+uvx google-agents-cli setup
+```
+
+This installs Agents CLI and its skills for the coding agent.
+
+## Fallback: download the skills only
+
+If installing `uvx` or the Agents CLI binary is not permitted, download and copy only the skills using the commands below.
+
 Run these commands from the project root:
 
 ```bash

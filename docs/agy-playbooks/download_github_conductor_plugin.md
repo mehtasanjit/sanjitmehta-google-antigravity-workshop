@@ -1,5 +1,17 @@
 # Download the Conductor Plugin
 
+## Preferred installation
+
+Install Conductor directly through Antigravity:
+
+```bash
+agy plugins install https://github.com/gemini-cli-extensions/conductor
+```
+
+## Fallback: workspace-local installation
+
+If the Antigravity plugin installation command cannot be used, download and copy the plugin using the commands below.
+
 Run these commands from the project root:
 
 ```bash
