@@ -1,0 +1,115 @@
+{
+  "students": [
+    {
+      "id": "alice",
+      "name": "Alice Nguyen",
+      "email": "alice@campus.edu",
+      "year": 2
+    },
+    {
+      "id": "bob",
+      "name": "Bob Martinez",
+      "email": "bob@campus.edu",
+      "year": 3
+    },
+    {
+      "id": "carol",
+      "name": "Carol Diaz",
+      "email": "carol@campus.edu",
+      "year": 1
+    }
+  ],
+  "professors": [
+    {
+      "id": "dr_reed",
+      "name": "Dr. Evelyn Reed",
+      "email": "reed@campus.edu"
+    },
+    {
+      "id": "dr_kapoor",
+      "name": "Dr. Anil Kapoor",
+      "email": "kapoor@campus.edu"
+    }
+  ],
+  "courses": [
+    {
+      "code": "CHEM-101",
+      "title": "Intro to Chemistry",
+      "professor_id": "dr_reed"
+    },
+    {
+      "code": "CHEM-201",
+      "title": "Organic Chemistry",
+      "professor_id": "dr_reed"
+    },
+    {
+      "code": "BIO-110",
+      "title": "Intro to Biology",
+      "professor_id": "dr_kapoor"
+    }
+  ],
+  "enrollments": [
+    {
+      "student_id": "alice",
+      "course_code": "CHEM-101"
+    },
+    {
+      "student_id": "alice",
+      "course_code": "BIO-110"
+    },
+    {
+      "student_id": "bob",
+      "course_code": "CHEM-101"
+    },
+    {
+      "student_id": "bob",
+      "course_code": "CHEM-201"
+    },
+    {
+      "student_id": "carol",
+      "course_code": "BIO-110"
+    }
+  ],
+  "grades": [
+    {
+      "student_id": "alice",
+      "course_code": "CHEM-101",
+      "score": 92,
+      "letter": "A-",
+      "updated_at": "2026-08-07T05:42:44+00:00",
+      "updated_by": "seed"
+    },
+    {
+      "student_id": "alice",
+      "course_code": "BIO-110",
+      "score": 85,
+      "letter": "B",
+      "updated_at": "2026-08-07T05:42:44+00:00",
+      "updated_by": "seed"
+    },
+    {
+      "student_id": "bob",
+      "course_code": "CHEM-101",
+      "score": 78,
+      "letter": "C+",
+      "updated_at": "2026-08-07T05:42:44+00:00",
+      "updated_by": "seed"
+    },
+    {
+      "student_id": "bob",
+      "course_code": "CHEM-201",
+      "score": 88,
+      "letter": "B+",
+      "updated_at": "2026-08-07T05:42:44+00:00",
+      "updated_by": "seed"
+    },
+    {
+      "student_id": "carol",
+      "course_code": "BIO-110",
+      "score": 95,
+      "letter": "A",
+      "updated_at": "2026-08-07T05:42:44+00:00",
+      "updated_by": "seed"
+    }
+  ]
+}
