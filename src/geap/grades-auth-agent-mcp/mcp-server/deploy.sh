@@ -13,7 +13,7 @@ set -euo pipefail
 PROJECT_ID="${PROJECT_ID:?set PROJECT_ID}"
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-grades-mcp}"
-REST_BASE_URL="${REST_BASE_URL:-https://grades-rest-47444200274.us-central1.run.app}"
+REST_BASE_URL="${REST_BASE_URL:?set REST_BASE_URL to your deployed grades REST service URL}"
 
 echo "Deploying ${SERVICE} to project=${PROJECT_ID} region=${REGION}"
 echo "  -> REST_BASE_URL=${REST_BASE_URL}"

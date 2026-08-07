@@ -18,22 +18,31 @@ is the authority that decides, based on the forwarded identity.
 
 ## Components
 
-| Folder | What it is | Status |
-|---|---|---|
-| [`rest-service/`](rest-service/) | Grades REST API — the resource server; validates the JWT and enforces deny-by-default authz (scope + ownership) | ✅ deployed |
-| [`mcp-server/`](mcp-server/) | FastMCP server (Streamable HTTP) — the OBO hop; forwards the user token to REST, makes no authz decisions | ✅ deployed |
-| [`agent/`](agent/) | ADK 2.x `LlmAgent` (Gemini) — injects the user's token into MCP calls via `header_provider` | ✅ built |
+| Folder | What it is |
+|---|---|
+| [`rest-service/`](rest-service/) | Grades REST API — the resource server; validates the JWT and enforces deny-by-default authz (scope + ownership) |
+| [`mcp-server/`](mcp-server/) | FastMCP server (Streamable HTTP) — the OBO hop; forwards the user token to REST, makes no authz decisions |
+| [`agent/`](agent/) | ADK 2.x `LlmAgent` (Gemini) — injects the user's token into MCP calls via `header_provider` |
 
 Each folder has its own README with details, local-run, tests, and deploy steps.
 
-## Live endpoints
+## Endpoints
 
-| Service | URL |
+After you deploy, note your two service URLs and use them below. They look like:
+
+| Service | URL (yours will differ) |
 |---|---|
-| REST | `https://grades-rest-47444200274.us-central1.run.app` |
-| MCP  | `https://grades-mcp-47444200274.us-central1.run.app/mcp` |
+| REST | `https://grades-rest-<HASH>.<REGION>.run.app` |
+| MCP  | `https://grades-mcp-<HASH>.<REGION>.run.app/mcp` |
 
-Project `default-project-alpha-1`, region `us-central1`.
+Get them any time with:
+
+```bash
+gcloud run services describe grades-rest --project <YOUR_PROJECT_ID> \
+  --region <YOUR_REGION> --format='value(status.url)'
+gcloud run services describe grades-mcp  --project <YOUR_PROJECT_ID> \
+  --region <YOUR_REGION> --format='value(status.url)'
+```
 
 ## Roles & scopes
 
@@ -48,22 +57,53 @@ Demo identities: `alice`, `bob`, `carol` (students), `dr_reed`, `dr_kapoor`
 
 ---
 
-## How to test it right now
+## Build & deploy (your own)
 
-Everything below hits the **live Cloud Run** services — no local servers to start.
+Follow each component's README in order — deploy REST first, then MCP (pointed at
+your REST URL), then run the agent (pointed at your MCP URL):
+
+1. **[`rest-service/`](rest-service/README.md)** → deploy → note `<YOUR_REST_URL>`
+2. **[`mcp-server/`](mcp-server/README.md)** → deploy with `REST_BASE_URL=<YOUR_REST_URL>` → note `<YOUR_MCP_URL>`
+3. **[`agent/`](agent/README.md)** → configure `MCP_URL=<YOUR_MCP_URL>/mcp` → run
+
+Deploy quick reference:
+
+```bash
+# REST service
+cd rest-service && PROJECT_ID=<YOUR_PROJECT_ID> REGION=<YOUR_REGION> \
+  JWT_SECRET=<A_STRONG_RANDOM_SECRET> ./deploy.sh
+
+# MCP server (point it at YOUR REST URL)
+cd mcp-server  && PROJECT_ID=<YOUR_PROJECT_ID> REGION=<YOUR_REGION> \
+  REST_BASE_URL=<YOUR_REST_URL> ./deploy.sh
+```
+
+Cloud Run deploy requires these roles on the deployer (see
+`rest-service/grant-iam.sh`): `run.admin`, `cloudbuild.builds.editor`,
+`artifactregistry.admin`, `storage.admin`, and `iam.serviceAccountUser` on the
+runtime service account.
+
+---
+
+## How to test it
+
+Fill in your own values first. All commands hit **your** deployed services.
 
 ### Setup (once per shell)
 ```bash
-PY=/home/user_alpha_sanjitmehta_altostrat/work/python/venvs/venv_1/bin/python
-cd /home/user_alpha_sanjitmehta_altostrat/work/sanjitmehta-google-antigravity-workshop/src/geap/grades-auth-agent-mcp
-REST=https://grades-rest-47444200274.us-central1.run.app
-MCP=https://grades-mcp-47444200274.us-central1.run.app/mcp
+# Use your own Python environment
+python -m venv .venv && source .venv/bin/activate    # or your existing venv
+
+# Your deployed URLs + the JWT secret you deployed REST with
+REST=<YOUR_REST_URL>          # e.g. https://grades-rest-<HASH>.<REGION>.run.app
+MCP=<YOUR_MCP_URL>/mcp        # e.g. https://grades-mcp-<HASH>.<REGION>.run.app/mcp
+export JWT_SECRET=<YOUR_REST_SECRET>
 ```
 
 ### 1. Test the REST service (curl — fastest)
 ```bash
-STUDENT=$($PY rest-service/scripts/generate_token.py alice)
-PROF=$($PY rest-service/scripts/generate_token.py dr_reed)
+STUDENT=$(python rest-service/scripts/generate_token.py alice)
+PROF=$(python rest-service/scripts/generate_token.py dr_reed)
 
 curl -s $REST/health                                                       # {"status":"ok"}
 curl -s -H "Authorization: Bearer $STUDENT" $REST/students/alice/grades    # 200, her grades
@@ -73,23 +113,23 @@ curl -s -H "Authorization: Bearer $PROF"    $REST/courses/CHEM-101/grades   # 20
 
 ### 2. Test the MCP server (through the MCP protocol)
 ```bash
-$PY mcp-server/scripts/call_tool.py $MCP "$STUDENT" --list
-$PY mcp-server/scripts/call_tool.py $MCP "$STUDENT" get_my_grades
-$PY mcp-server/scripts/call_tool.py $MCP "$STUDENT" get_student_grades student_id=bob   # 403 error
-$PY mcp-server/scripts/call_tool.py $MCP "$PROF"    get_course_grades course_code=CHEM-101
+python mcp-server/scripts/call_tool.py $MCP "$STUDENT" --list
+python mcp-server/scripts/call_tool.py $MCP "$STUDENT" get_my_grades
+python mcp-server/scripts/call_tool.py $MCP "$STUDENT" get_student_grades student_id=bob   # 403 error
+python mcp-server/scripts/call_tool.py $MCP "$PROF"    get_course_grades course_code=CHEM-101
 ```
 
 ### 3. Test the full agent (LLM + OBO, natural language) — recommended
 ```bash
 cd agent
-export GOOGLE_GENAI_USE_VERTEXAI=TRUE GOOGLE_CLOUD_PROJECT=default-project-alpha-1 \
-       GOOGLE_CLOUD_LOCATION=us-central1 MODEL=gemini-2.5-flash
+export GOOGLE_GENAI_USE_VERTEXAI=TRUE GOOGLE_CLOUD_PROJECT=<YOUR_PROJECT_ID> \
+       GOOGLE_CLOUD_LOCATION=<YOUR_REGION> MODEL=gemini-2.5-flash MCP_URL=$MCP
 
-$PY run.py --list-tools                                                  # verify wiring (no LLM)
-$PY run.py --user alice   --prompt "What are my grades?"
-$PY run.py --user alice   --prompt "Look up grades for student id bob"   # polite 403 refusal
-$PY run.py --user dr_reed --prompt "Show all grades for CHEM-101"
-$PY run.py --user dr_reed --prompt "Record 88 for bob in CHEM-101"
+python run.py --list-tools                                              # verify wiring (no LLM)
+python run.py --user alice   --prompt "What are my grades?"
+python run.py --user alice   --prompt "Look up grades for student id bob"   # polite 403 refusal
+python run.py --user dr_reed --prompt "Show all grades for CHEM-101"
+python run.py --user dr_reed --prompt "Record 88 for bob in CHEM-101"
 ```
 Swap `--user` between `alice`, `dr_reed`, `admin` to see the same agent return
 different data per identity. Tool calls print as they happen, so you can watch the
@@ -98,8 +138,8 @@ OBO hop.
 ### 4. Interactive chat UI (ADK dev UI)
 ```bash
 cd agent
-cp .env.example .env          # already has the Vertex + MCP settings
-export USER_JWT=$($PY ../rest-service/scripts/generate_token.py dr_reed)
+cp .env.example .env          # set your project, region, and MCP_URL
+export USER_JWT=$(python ../rest-service/scripts/generate_token.py dr_reed)
 adk web                       # browser chat; pick the "agent" app
 # or terminal chat (run from the grades-auth-agent-mcp/ dir):
 adk run agent
@@ -108,8 +148,8 @@ adk run agent
 ### Notes
 - **Tokens expire after 60 min** — just re-run the `generate_token.py` line
   (or add `--ttl 240` for longer).
+- Mint tokens with the **same `JWT_SECRET`** you deployed the REST service with.
 - `adk web` needs `node` + a browser; if headless, use `run.py`.
-- All Python uses the shared venv at the `PY` path above.
 
 ---
 
@@ -119,34 +159,18 @@ adk run agent
 npx @modelcontextprotocol/inspector
 ```
 - Transport: **Streamable HTTP**
-- URL: `https://grades-mcp-47444200274.us-central1.run.app/mcp`
+- URL: `<YOUR_MCP_URL>/mcp`
 - Authentication → **Bearer Token**: paste a JWT from
   `rest-service/scripts/generate_token.py <user>` (required for tool calls)
 
 CLI form:
 ```bash
 npx @modelcontextprotocol/inspector --cli $MCP --transport http \
-  --header "Authorization: Bearer $($PY rest-service/scripts/generate_token.py dr_reed)" \
+  --header "Authorization: Bearer $(python rest-service/scripts/generate_token.py dr_reed)" \
   --method tools/call --tool-name get_course_grades --tool-arg course_code=CHEM-101
 ```
 
 ---
-
-## Deploy (re-deploy after changes)
-
-```bash
-# REST service
-cd rest-service && PROJECT_ID=default-project-alpha-1 REGION=us-central1 ./deploy.sh
-
-# MCP server (point it at the REST URL)
-cd mcp-server  && PROJECT_ID=default-project-alpha-1 REGION=us-central1 \
-  REST_BASE_URL=https://grades-rest-47444200274.us-central1.run.app ./deploy.sh
-```
-
-Cloud Run deploy requires these roles on the deployer (see
-`rest-service/grant-iam.sh`): `run.admin`, `cloudbuild.builds.editor`,
-`artifactregistry.admin`, `storage.admin`, and `iam.serviceAccountUser` on the
-runtime service account.
 
 ## Auth model (recap)
 

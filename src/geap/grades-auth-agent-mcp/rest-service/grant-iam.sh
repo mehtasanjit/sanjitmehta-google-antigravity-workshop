@@ -8,13 +8,14 @@
 # two-step approach discussed in the project notes.
 #
 # Usage:
-#   PROJECT=default-project-alpha-1 ./grant-iam.sh
+#   PROJECT=<YOUR_PROJECT_ID> MEMBER="user:<YOU>@<YOUR_DOMAIN>" ./grant-iam.sh
 set -euo pipefail
 
-PROJECT="${PROJECT:-default-project-alpha-1}"
-MEMBER="${MEMBER:-user:user_gamma@sanjitmehta.altostrat.com}"
-# Cloud Run runtime service account (Compute default SA for this project)
-RUNTIME_SA="${RUNTIME_SA:-47444200274-compute@developer.gserviceaccount.com}"
+PROJECT="${PROJECT:?set PROJECT to your GCP project id}"
+MEMBER="${MEMBER:?set MEMBER, e.g. user:you@example.com}"
+# Cloud Run runtime service account (Compute default SA), derived from the project.
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
+RUNTIME_SA="${RUNTIME_SA:-${PROJECT_NUMBER}-compute@developer.gserviceaccount.com}"
 
 echo "Granting deploy roles to ${MEMBER} on ${PROJECT} ..."
 for ROLE in roles/run.admin \
