@@ -13,10 +13,10 @@ PROJECT_ID="${PROJECT_ID:?set PROJECT_ID}"
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-grades-rest}"
 
-# For the demo we ship a JWT_SECRET as an env var. In production, source it from
-# Secret Manager (--set-secrets JWT_SECRET=grades-jwt-secret:latest) and/or move
-# to AUTH_MODE=gcp with a JWKS_URL.
-JWT_SECRET="${JWT_SECRET:-dev-secret-change-me}"
+# The HS256 secret is sourced from Secret Manager, NOT shipped as a plaintext env
+# var (a public/weak secret makes the token signature forgeable). The runtime
+# service account needs roles/secretmanager.secretAccessor on this secret.
+JWT_SECRET_NAME="${JWT_SECRET_NAME:-google-antigravity-workshop-secret-1}"
 
 echo "Deploying ${SERVICE} to project=${PROJECT_ID} region=${REGION} ..."
 gcloud run deploy "${SERVICE}" \
@@ -24,7 +24,8 @@ gcloud run deploy "${SERVICE}" \
   --region="${REGION}" \
   --source=. \
   --allow-unauthenticated \
-  --set-env-vars="AUTH_MODE=local,JWT_SECRET=${JWT_SECRET},JWT_ISSUER=grades-auth-local,JWT_AUDIENCE=grades-rest" \
+  --set-env-vars="AUTH_MODE=local,JWT_ISSUER=grades-auth-local,JWT_AUDIENCE=grades-rest" \
+  --set-secrets="JWT_SECRET=${JWT_SECRET_NAME}:latest" \
   --port=8080
 
 echo

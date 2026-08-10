@@ -53,8 +53,17 @@ def pure_jwt_encode(payload: dict, secret: str, algorithm: str = "HS256") -> str
     
     return f"{header_b64}.{payload_b64}.{sig_b64}"
 
-# Defaults mirror app/config.py so tokens validate out of the box.
-SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
+# The secret must match the service's JWT_SECRET (Secret Manager). No default:
+# a hardcoded fallback here would hand anyone a working token-minting tool.
+SECRET = os.getenv("JWT_SECRET")
+if not SECRET:
+    print(
+        "Set JWT_SECRET to the service's secret before minting a token, e.g.\n"
+        "  export JWT_SECRET=$(gcloud secrets versions access latest "
+        "--secret=google-antigravity-workshop-secret-1)",
+        file=sys.stderr,
+    )
+    sys.exit(2)
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ISSUER = os.getenv("JWT_ISSUER", "grades-auth-local")
 AUDIENCE = os.getenv("JWT_AUDIENCE", "grades-rest")
@@ -114,7 +123,6 @@ def main() -> None:
         token = jwt.encode(claims, SECRET, algorithm=ALGORITHM)
     else:
         token = pure_jwt_encode(claims, SECRET, algorithm=ALGORITHM)
-    print(token)
     print(token)
 
 
