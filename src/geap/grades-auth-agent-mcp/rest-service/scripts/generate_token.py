@@ -20,7 +20,38 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 
-import jwt
+import base64
+import hmac
+import hashlib
+import json
+
+try:
+    import jwt
+except ImportError:
+    jwt = None
+
+
+def pure_jwt_encode(payload: dict, secret: str, algorithm: str = "HS256") -> str:
+    if algorithm != "HS256":
+        raise ValueError(f"Only HS256 algorithm supported in fallback mode, got {algorithm}")
+    
+    header = {"alg": "HS256", "typ": "JWT"}
+    header_b64 = base64.urlsafe_b64encode(json.dumps(header, separators=(',', ':')).encode('utf-8')).rstrip(b'=').decode('utf-8')
+    
+    clean_payload = {}
+    for k, v in payload.items():
+        if isinstance(v, datetime):
+            clean_payload[k] = int(v.timestamp())
+        else:
+            clean_payload[k] = v
+            
+    payload_b64 = base64.urlsafe_b64encode(json.dumps(clean_payload, separators=(',', ':')).encode('utf-8')).rstrip(b'=').decode('utf-8')
+    
+    signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+    signature = hmac.new(secret.encode('utf-8'), signing_input, hashlib.sha256).digest()
+    sig_b64 = base64.urlsafe_b64encode(signature).rstrip(b'=').decode('utf-8')
+    
+    return f"{header_b64}.{payload_b64}.{sig_b64}"
 
 # Defaults mirror app/config.py so tokens validate out of the box.
 SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
@@ -79,7 +110,11 @@ def main() -> None:
         "iat": now,
         "exp": now + timedelta(minutes=args.ttl),
     }
-    token = jwt.encode(claims, SECRET, algorithm=ALGORITHM)
+    if jwt:
+        token = jwt.encode(claims, SECRET, algorithm=ALGORITHM)
+    else:
+        token = pure_jwt_encode(claims, SECRET, algorithm=ALGORITHM)
+    print(token)
     print(token)
 
 
