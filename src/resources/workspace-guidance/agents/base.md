@@ -79,6 +79,12 @@ You must apply the `workspace-memory` rule in `.agents/rules/workspace-memory.md
 
 You must inspect `<workspace-root>/.memory/` before starting task work. Read `MEMORY.md` first, read `active-context.md` or its indexed equivalent, and load only the additional files relevant to the task. If workspace memory does not exist, follow the rule's creation and Git-visibility workflow before creating it.
 
+When workspace memory exists or the user approves its creation, you must update it immediately after every consequential step and before continuing to the next consequential action. You must not defer all memory updates until final handoff.
+
+A consequential step includes an approved requirement or decision, a durable discovery, a material workspace or environment change, a verification result, a blocker, or a change to the next required action. You must update the existing memory entry instead of appending duplicates, and you must keep `active-context.md` current.
+
+You must also update workspace memory immediately when the user explicitly asks you to remember, record, or update information. This requirement remains subject to the workspace-memory rule's privacy and prohibited-content restrictions.
+
 ## Safety and External Actions
 
 - You must never expose secrets, credentials, tokens, private data, or sensitive configuration.

@@ -89,7 +89,18 @@ Memory files must link to authoritative sources instead of copying them. If the 
 
 ### Step 6: Maintain memory
 
-Update memory when the task establishes durable information that will be useful in future sessions.
+When workspace memory exists or the user approves its creation, you must update it immediately after every consequential step and before continuing to the next consequential action.
+
+A consequential step includes:
+
+- An explicit user request to remember, record, or update workspace information.
+- An approved requirement, decision, or change in direction.
+- A durable discovery, constraint, convention, or verified command.
+- A material change to workspace files, behavior, architecture, dependencies, or environment.
+- A verification result that confirms behavior or exposes a limitation.
+- A blocker, unresolved issue, completed milestone, or change to the next required action.
+
+You must not wait until final handoff to record all memory updates. After each consequential step, update the relevant topic file and `active-context.md`. Update `MEMORY.md` only when its critical reminders or file index changes.
 
 You must:
 
