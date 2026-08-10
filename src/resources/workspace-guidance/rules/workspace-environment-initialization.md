@@ -1,5 +1,10 @@
 # Workspace Environment Initialization Rule
 
+## Rule Metadata
+
+- **Summary:** Establish the workspace execution environment, runtime, and dependency tooling before running project commands or changing the environment.
+- **Activation Mode:** Model Decision
+
 ## Applicability
 
 You must complete this workflow before running project commands, creating or changing a project environment, installing dependencies, or invoking development tools.
