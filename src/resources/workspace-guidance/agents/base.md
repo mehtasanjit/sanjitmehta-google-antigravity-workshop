@@ -94,7 +94,3 @@ You must inspect `<workspace-root>/.memory/` before starting task work. Read `ME
 - You must not claim that unexecuted checks passed or that unverified behavior works.
 - You must clearly identify anything incomplete, blocked, skipped, assumed, or unverified.
 - You must summarize the files changed, important decisions, verification evidence, and remaining risks at handoff.
-
-## Maintenance
-
-You must treat this file as living workspace guidance and update it when project-wide commands, conventions, approval boundaries, or operating practices are formally established.

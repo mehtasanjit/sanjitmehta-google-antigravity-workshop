@@ -30,13 +30,13 @@ If the user provides the details, record them without running discovery commands
 
 If additional environment details required for the current task remain unknown, ask the user or, with their authorization, determine them using appropriate non-mutating checks.
 
-### Step 3: Identify the established toolchain
+### Step 3: Identify the established runtime and dependency tooling
 
 1. Treat existing project instructions, configuration, and lock files as authoritative.
 2. Identify the runtime, environment manager, and package manager already used by the project.
 3. You must not introduce a different package manager into an established project without explicit approval.
 4. You must not create competing dependency or lock files.
-5. If the project contains conflicting toolchain indicators, you must stop and ask the user which toolchain is authoritative.
+5. If the project contains conflicting runtime or dependency-tooling indicators, you must stop and ask the user which configuration is authoritative.
 
 ### Step 4: Apply the relevant environment skill
 
@@ -92,7 +92,7 @@ You must not expose credentials, secret values, or the complete process environm
 You must stop and ask the user before proceeding when:
 
 - A required language-specific environment skill is unavailable.
-- Existing project instructions or toolchain files conflict.
+- Existing project instructions, runtime files, or dependency files conflict.
 - The available runtime is incompatible with the project.
 - Environment creation, installation, or download has not been approved.
 - A required action needs unavailable permissions.
