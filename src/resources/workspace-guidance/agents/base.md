@@ -73,6 +73,12 @@ Before starting task work, you must:
 
 If metadata is missing, read the complete file. If applicability is still unclear, ask the user. Do not apply unrelated guidance.
 
+## Workspace Memory
+
+You must apply the `workspace-memory` rule in `.agents/rules/workspace-memory.md` to every workspace task.
+
+You must inspect `<workspace-root>/.memory/` before starting task work. Read `MEMORY.md` first, read `active-context.md`, and load only the additional files relevant to the task. If workspace memory does not exist, follow the rule's creation and Git-visibility workflow before creating it.
+
 ## Safety and External Actions
 
 - You must never expose secrets, credentials, tokens, private data, or sensitive configuration.
