@@ -1,95 +1,123 @@
 ---
 name: python-environment-initialization
 description: >
-  Establishes or reuses a safe project-specific Python environment and selects
-  the appropriate Python package-management workflow. Use before executing
-  Python commands, creating or changing a virtual environment, installing
-  Python dependencies, or choosing between uv, Poetry, Pipenv, pip, uvx, and
-  pipx.
+  Establish or reuse a safe project-specific Python environment while preserving
+  the project's established runtime, environment manager, and dependency
+  workflow. Use before executing project Python commands, creating or changing
+  a Python environment, installing or synchronizing Python dependencies, or
+  installing or temporarily running standalone Python tools.
 ---
 
 # Python Environment Initialization
 
 ## Workflow
 
-### 1. Inspect the Python project configuration
+### 1. Inspect the Python project
 
-1. Read the `AGENTS.md` file governing the current project.
-2. If `.agents/rules/workspace-environment-initialization.md` exists, confirm that its workspace-discovery and toolchain-identification steps have been completed.
-3. Inspect relevant files such as `pyproject.toml`, `uv.lock`, `poetry.lock`, `Pipfile`, `Pipfile.lock`, `requirements*.txt`, and `.python-version`.
-4. Determine the required Python version and the project's established environment and package-management method when declared.
-5. Do not execute Python, create an environment, or run a package manager during this step.
+1. Inspect the relevant Python configuration, dependency, lock, and version files. These may include `pyproject.toml`, manager-specific lock files, `Pipfile`, `requirements*.txt`, `.python-version`, and other project-declared runtime files.
+2. Determine the required Python version and the established environment and dependency workflow when declared.
+3. Treat applicable instructions and unambiguous project configuration as authoritative.
+4. Do not execute Python, run a package manager, create an environment, install dependencies, or modify files during this step.
 
-### 2. Resolve the virtual environment
+If runtime, environment, or dependency indicators conflict, stop and ask the user which configuration is authoritative.
 
-1. Ask the user for the explicit path to the Python virtual environment.
-2. Do not execute Python until the user confirms the environment path.
-3. With the user's authorization, inspect the confirmed environment using its exact interpreter path.
-4. Reuse the environment only when it belongs to the current project, uses a compatible Python version, and is suitable for the established dependency workflow.
-5. Do not reuse a global environment or an environment shared by unrelated projects.
-6. If no suitable environment exists, propose creating a project-local environment and obtain explicit approval before creating it.
-7. Do not assume that a directory named `.venv` is the correct environment without user confirmation.
-8. Never use the system Python or install project packages globally.
+### 2. Discover the Python environment
 
-### 3. Select the package-management method
+1. Ask whether the user wants to provide the environment path or authorize automated, read-only discovery.
+2. If the user provides a path, record it without running discovery commands.
+3. If the user authorizes discovery, inspect project configuration, known environment locations, and non-mutating environment-manager information.
+4. Do not use commands that can create, synchronize, update, or remove an environment or lock file during discovery.
+5. Identify the exact interpreter path and determine whether the environment is associated with the current project.
+6. Reuse an environment only when it is project-specific, compatible with the required Python version, and suitable for the established dependency workflow.
+7. Do not reuse a global environment or an environment shared by unrelated projects.
+8. Do not assume `.venv` is correct solely because the directory exists.
 
-Follow explicit project instructions first. Otherwise, use the existing project files as the authority:
+If compatibility or project association cannot be established from files alone, obtain authorization before running a non-mutating check with the exact interpreter or established manager.
 
-1. Use `uv` when the project contains `uv.lock` or is configured for uv.
-2. Use Poetry when the project contains `poetry.lock`.
-3. Use Pipenv when the project contains `Pipfile.lock`.
-4. Use `pip` through the approved virtual environment for a requirements-based project.
-5. For a new Python project with no established toolchain, recommend `uv` and obtain approval before establishing it.
+If no suitable environment exists, propose an environment using the established manager and its configured location. For a new unmanaged project, prefer `<workspace-root>/.venv`. Obtain approval before creating it.
 
-Do not introduce a second package manager, create a competing lock file, or replace the established dependency workflow without explicit approval.
+You may inspect a base Python interpreter or use it to create an approved isolated environment. You must never install project dependencies into the system or global Python environment.
+
+### 3. Select the dependency workflow
+
+Follow this precedence:
+
+1. Follow explicit project instructions.
+2. Preserve an established dependency or environment manager, including one not listed in this skill.
+3. Use `uv` when `uv.lock`, uv configuration, or project instructions establish uv.
+4. Use Poetry when `poetry.lock`, Poetry dependency configuration, or project instructions establish Poetry.
+5. Use Pipenv when `Pipfile`, `Pipfile.lock`, or project instructions establish Pipenv.
+6. Use the approved environment's interpreter with `-m pip` for a requirements-based project only when no higher-level manager is established.
+7. For a new project with no established dependency workflow, recommend `uv` and obtain approval before establishing it.
+
+Do not infer pip usage from a requirements file when another manager is established. Do not introduce a second manager, create a competing lock file, or replace the established workflow without explicit approval.
+
+If multiple managers appear authoritative or the established manager is unclear, stop and ask the user.
 
 ### 4. Handle standalone Python tools
 
 - Use `uv tool` for an approved persistent uv-managed CLI installation.
 - Use `uvx` only for approved temporary CLI execution.
 - Use `pipx` when it is the established or approved standalone-tool manager.
-- Do not use `uv tool`, `uvx`, or `pipx` for project runtime dependencies.
-- Do not install standalone tools until the user approves the installation or temporary execution.
+- Preserve another established standalone-tool manager when present.
+- Do not use standalone-tool managers for project runtime dependencies.
+- Treat temporary execution as running downloaded code and obtain approval first.
 
 ### 5. Obtain approval for changes
 
 Before changing the Python environment:
 
-1. Explain whether the environment will be reused or created.
-2. Identify packages, tools, configuration files, and lock files that would be created or modified.
-3. Explain any required installation or download.
-4. Obtain explicit approval before creating the environment or installing packages or tools.
+1. State the selected environment, interpreter, environment manager, and dependency manager.
+2. Explain whether the environment will be reused, created, or synchronized.
+3. Identify the commands to be run and the packages, tools, configuration files, and lock files that may change.
+4. Identify any required installation, download, or network access.
+5. Obtain explicit approval for environment creation, synchronization, installation, temporary tool execution, and dependency or lock-file changes.
 
-### 6. Configure the environment
+Reuse an explicit approval already obtained for the same action and scope. Do not ask for duplicate approval. Obtain new approval when the action or expected changes expand.
+
+### 6. Configure and use the environment
 
 After approval:
 
-1. Use only the approved environment and package manager.
-2. Use the exact interpreter from the approved environment for direct Python execution.
-3. Install only dependencies required by the approved task.
-4. Preserve existing dependency versions unless a change is necessary for the task.
-5. Keep the established lock file synchronized with intentional dependency changes.
-6. Do not mix environments or package managers.
+1. Use only the approved environment and established manager.
+2. Prefer the established manager's native execution command. Use the exact approved interpreter for direct Python execution.
+3. For a requirements-based pip workflow, invoke pip as `<approved-python> -m pip`.
+4. Do not depend on shell activation when a manager command or exact executable path is available.
+5. Treat commands that automatically create or synchronize an environment as environment changes, even when their primary purpose is command execution.
+6. Use locked or frozen behavior when supported and no dependency change is intended.
+7. Install only dependencies required by the approved task.
+8. Preserve existing versions unless a change is required and approved.
+9. Update dependency declarations and lock files only for intentional, approved dependency changes.
+10. Do not bypass the established manager or mix environments and managers.
 
 ### 7. Verify and report
 
+Verify, using the approved environment:
+
+1. The exact interpreter path and Python version.
+2. Compatibility with the project's declared Python requirement.
+3. Association between the environment, manager, and current project.
+4. Availability of the dependencies or tools required by the task.
+5. That no unapproved configuration, dependency, or lock-file changes occurred.
+
 Report:
 
-- Python version.
-- Approved interpreter and environment path.
-- Whether the environment was reused or created.
-- Selected package manager.
-- Dependency or tool changes performed.
+- Python version and exact interpreter path.
+- Environment path and whether it was reused, created, or synchronized.
+- Selected environment and dependency managers.
+- Dependency, tool, configuration, and lock-file changes performed.
 - Missing, incompatible, or unverified components.
 
-Do not expose credentials, secret values, or the complete process environment.
+Do not expose credentials, secret values, private index URLs, or the complete process environment.
 
 ## Stop Conditions
 
 Stop and ask the user before proceeding when:
 
-- The user has not confirmed the virtual-environment path.
-- Python version or toolchain requirements conflict.
-- The confirmed environment is incompatible or belongs to another project.
-- Environment creation, installation, download, or lock-file changes have not been approved.
-- Continuing would require a global or system-level installation.
+- The user has neither provided an environment path nor authorized discovery.
+- Runtime, environment, dependency, or lock-file indicators conflict.
+- No compatible Python interpreter is available.
+- The environment is ambiguous, incompatible, global, or associated with another project.
+- The established manager is unavailable and using another manager would change the workflow.
+- A required environment change, installation, download, temporary execution, or lock-file update is not approved.
+- Continuing would require installing project dependencies globally or modifying the system Python environment.
