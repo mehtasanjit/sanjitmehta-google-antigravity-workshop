@@ -47,33 +47,31 @@ You must not begin implementation while an essential requirement or significant 
 
 ## Rules and Skills
 
-Workspace rules live under `.agents/rules/`, and workspace skills live under `.agents/skills/`.
+Rules are stored in `.agents/rules/`. Skills are stored in `.agents/skills/`.
 
-Because rule activation settings may not be available from the IDE, every workspace rule must contain:
+The IDE may not enforce rule activation. You must enforce it from the rule files.
 
-- A `Rule Metadata` section declaring a concise summary and one intended activation mode: `Always On`, `Manual`, `Model Decision`, or `Glob`.
-- An `Applicability` section defining when the rule does and does not apply.
-- A manual invocation name when activation is `Manual`.
-- One or more file patterns when activation is `Glob`.
+Every rule must contain:
 
-Before beginning task-specific work, you must:
+- `Rule Metadata` with a summary and an activation mode.
+- `Applicability` stating when the rule does and does not apply.
+- A manual invocation name when the mode is `Manual`.
+- File patterns when the mode is `Glob`.
 
-1. List the available rules under `.agents/rules/` and skills under `.agents/skills/`.
-2. Inspect each rule's `Rule Metadata` and `Applicability` sections.
-3. Interpret rule activation as follows:
+Before starting task work, you must:
+
+1. List the available rules and skills.
+2. Inspect each rule file. Read its `Rule Metadata` and `Applicability` sections when present.
+3. Apply rule modes as follows:
    - `Always On`: Read and apply the complete rule.
-   - `Manual`: Apply the rule only when the user explicitly invokes it.
-   - `Model Decision`: Determine applicability from the rule summary, applicability criteria, and current task.
-   - `Glob`: Apply the rule when the task reads, creates, or modifies a file matching a declared pattern.
-4. Inspect each skill's `name` and `description` frontmatter to determine whether it applies to the current task.
-5. Read every applicable rule and skill completely before taking the action it governs.
-6. Load supporting references only when required by an applicable rule, skill, or task.
+   - `Manual`: Apply only when the user invokes the rule.
+   - `Model Decision`: Apply when its summary and applicability match the task.
+   - `Glob`: Apply when the task reads, creates, or changes a matching file.
+4. Inspect each skill's `SKILL.md`. Read its `name` and `description` frontmatter when present.
+5. Read every applicable rule and skill completely before acting.
+6. Load supporting references only when needed.
 
-You must not apply unrelated rules or skills merely because they are available. If rule metadata, applicability criteria, or skill descriptions are missing or ambiguous, you must inspect the complete file and ask the user if applicability remains unclear.
-
-Rule metadata documents the intended activation behavior for the agent. You must not assume that the IDE will enforce it automatically.
-
-You must use specification-driven workflow guidance to manage lifecycle artifacts and agent-development guidance to govern agent-specific technical work. When required guidance is missing or cannot be applied, you must explain the limitation and use the safest in-scope fallback.
+If metadata is missing, read the complete file. If applicability is still unclear, ask the user. Do not apply unrelated guidance.
 
 ## Safety and External Actions
 
