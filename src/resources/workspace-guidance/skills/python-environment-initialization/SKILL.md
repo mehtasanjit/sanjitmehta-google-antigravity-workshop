@@ -29,7 +29,7 @@ If runtime, environment, or dependency indicators conflict, stop and ask the use
 4. Do not use commands that can create, synchronize, update, or remove an environment or lock file during discovery.
 5. Identify the exact interpreter path and determine whether the environment is associated with the current project.
 6. Reuse an environment only when it is project-specific, compatible with the required Python version, and suitable for the established dependency workflow.
-7. Do not reuse a global environment or an environment shared by unrelated projects.
+7. Do not reuse system Python, a global environment, or an environment shared by unrelated projects as the project environment.
 8. Do not assume `.venv` is correct solely because the directory exists.
 
 If compatibility or project association cannot be established from files alone, obtain authorization before running a non-mutating check with the exact interpreter or established manager.
@@ -47,7 +47,7 @@ Follow this precedence:
 3. Use `uv` when `uv.lock`, uv configuration, or project instructions establish uv.
 4. Use Poetry when `poetry.lock`, Poetry dependency configuration, or project instructions establish Poetry.
 5. Use Pipenv when `Pipfile`, `Pipfile.lock`, or project instructions establish Pipenv.
-6. Use the approved environment's interpreter with `-m pip` for a requirements-based project only when no higher-level manager is established.
+6. Use the resolved environment's interpreter with `-m pip` for a requirements-based project only when no higher-level manager is established.
 7. For a new project with no established dependency workflow, recommend `uv` and obtain approval before establishing it.
 
 Do not infer pip usage from a requirements file when another manager is established. Do not introduce a second manager, create a competing lock file, or replace the established workflow without explicit approval.
@@ -77,11 +77,11 @@ Reuse an explicit approval already obtained for the same action and scope. Do no
 
 ### 6. Configure and use the environment
 
-After approval:
+After resolving the environment and obtaining any required approvals:
 
-1. Use only the approved environment and established manager.
-2. Prefer the established manager's native execution command. Use the exact approved interpreter for direct Python execution.
-3. For a requirements-based pip workflow, invoke pip as `<approved-python> -m pip`.
+1. Use only the resolved environment and established manager.
+2. Prefer the established manager's native execution command. Use the exact resolved interpreter for direct Python execution.
+3. For a requirements-based pip workflow, invoke pip as `<resolved-python> -m pip`.
 4. Do not depend on shell activation when a manager command or exact executable path is available.
 5. Treat commands that automatically create or synchronize an environment as environment changes, even when their primary purpose is command execution.
 6. Use locked or frozen behavior when supported and no dependency change is intended.
@@ -92,7 +92,7 @@ After approval:
 
 ### 7. Verify and report
 
-Verify, using the approved environment:
+Verify, using the resolved environment:
 
 1. The exact interpreter path and Python version.
 2. Compatibility with the project's declared Python requirement.
