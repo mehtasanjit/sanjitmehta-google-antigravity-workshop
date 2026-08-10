@@ -47,11 +47,33 @@ You must not begin implementation while an essential requirement or significant 
 
 ## Rules and Skills
 
-- Before specialized work, you must inspect `.agents/rules/` and `.agents/skills/` to identify all guidance applicable to the task.
-- You must read and apply every relevant rule and skill before taking the action it governs.
-- You must not apply unrelated rules or skills merely because they are available.
-- You must use specification-driven workflow guidance to manage lifecycle artifacts and agent-development guidance to govern agent-specific technical work.
-- When a required rule or skill is missing or cannot be applied, you must explain the limitation and use the safest in-scope fallback.
+Workspace rules live under `.agents/rules/`, and workspace skills live under `.agents/skills/`.
+
+Because rule activation settings may not be available from the IDE, every workspace rule must contain:
+
+- A `Rule Metadata` section declaring a concise summary and one intended activation mode: `Always On`, `Manual`, `Model Decision`, or `Glob`.
+- An `Applicability` section defining when the rule does and does not apply.
+- A manual invocation name when activation is `Manual`.
+- One or more file patterns when activation is `Glob`.
+
+Before beginning task-specific work, you must:
+
+1. List the available rules under `.agents/rules/` and skills under `.agents/skills/`.
+2. Inspect each rule's `Rule Metadata` and `Applicability` sections.
+3. Interpret rule activation as follows:
+   - `Always On`: Read and apply the complete rule.
+   - `Manual`: Apply the rule only when the user explicitly invokes it.
+   - `Model Decision`: Determine applicability from the rule summary, applicability criteria, and current task.
+   - `Glob`: Apply the rule when the task reads, creates, or modifies a file matching a declared pattern.
+4. Inspect each skill's `name` and `description` frontmatter to determine whether it applies to the current task.
+5. Read every applicable rule and skill completely before taking the action it governs.
+6. Load supporting references only when required by an applicable rule, skill, or task.
+
+You must not apply unrelated rules or skills merely because they are available. If rule metadata, applicability criteria, or skill descriptions are missing or ambiguous, you must inspect the complete file and ask the user if applicability remains unclear.
+
+Rule metadata documents the intended activation behavior for the agent. You must not assume that the IDE will enforce it automatically.
+
+You must use specification-driven workflow guidance to manage lifecycle artifacts and agent-development guidance to govern agent-specific technical work. When required guidance is missing or cannot be applied, you must explain the limitation and use the safest in-scope fallback.
 
 ## Safety and External Actions
 
