@@ -77,7 +77,7 @@ If metadata is missing, read the complete file. If applicability is still unclea
 
 You must apply the `workspace-memory` rule in `.agents/rules/workspace-memory.md` to every workspace task.
 
-You must inspect `<workspace-root>/.memory/` before starting task work. Read `MEMORY.md` first, read `active-context.md`, and load only the additional files relevant to the task. If workspace memory does not exist, follow the rule's creation and Git-visibility workflow before creating it.
+You must inspect `<workspace-root>/.memory/` before starting task work. Read `MEMORY.md` first, read `active-context.md` or its indexed equivalent, and load only the additional files relevant to the task. If workspace memory does not exist, follow the rule's creation and Git-visibility workflow before creating it.
 
 ## Safety and External Actions
 

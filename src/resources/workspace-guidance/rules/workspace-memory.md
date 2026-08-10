@@ -18,7 +18,7 @@ This rule does not require memory to be created when the user declines it. Do no
 1. Resolve the workspace or Git root.
 2. Inspect `<workspace-root>/.memory/`.
 3. If `.memory/` exists, read `.memory/MEMORY.md` first.
-4. Read `.memory/active-context.md` to determine the current focus, completed work, blockers, and next steps.
+4. Read `.memory/active-context.md`, or its indexed equivalent, to determine the current focus, completed work, blockers, and next steps.
 5. Inspect the remaining memory files and read only those relevant to the current task.
 6. Do not load every memory file by default.
 
@@ -36,6 +36,8 @@ Apply the answer as follows:
 
 - **Private:** Create `<workspace-root>/.memory/` and ensure `/.memory/` is listed in the root `.gitignore`.
 - **Committed:** Create `<workspace-root>/.memory/` and do not add it to `.gitignore`.
+
+Private memory may contain user- or machine-specific workspace facts, but never secrets. Committed memory must contain only information suitable for the entire team and repository history; it must not contain personal preferences or machine-specific values.
 
 If the user declines workspace memory, proceed without creating it. Do not repeat the question during the same task.
 
@@ -58,8 +60,8 @@ Create the following files only when they have useful content:
 
 Create these situational files only when the information does not already have an authoritative home:
 
-- `environment.md`: Established workspace- or machine-specific environment facts.
-- `preferences.md`: Personal working preferences. Keep this file private.
+- `environment.md`: Established workspace environment facts. Include machine-specific facts only in private memory.
+- `preferences.md`: Personal working preferences. Create this file only when `.memory/` is private.
 - `progress.md`: Longer-term milestones when they no longer fit clearly in `active-context.md`.
 - `architecture.md`: Architectural recall when no authoritative architecture document exists.
 
