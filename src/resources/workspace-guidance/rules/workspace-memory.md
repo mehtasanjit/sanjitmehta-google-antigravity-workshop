@@ -26,22 +26,38 @@ If `.memory/` exists without `MEMORY.md`, inspect the available memory-file name
 
 If an existing memory file lacks the required frontmatter, add it when that file is next updated. Do not create a duplicate file merely to apply the current format.
 
-### Step 2: Ask before creating memory
+### Step 2: Resolve memory creation and Git visibility
 
 If `.memory/` does not exist, ask:
 
-> Should workspace memory remain private, or be committed to the repository for the team?
+> No workspace memory exists. Should I create `.memory/`?
 
-Apply the answer as follows:
+If the user declines, proceed without workspace memory and do not repeat the question during the same task.
 
-- **Private:** Create `<workspace-root>/.memory/` and ensure `/.memory/` is listed in the root `.gitignore`.
-- **Committed:** Create `<workspace-root>/.memory/` and do not add it to `.gitignore`.
+If the user approves creation:
 
-Private memory may contain user- or machine-specific workspace facts, but never secrets or personal data. Committed memory must contain only information suitable for the entire team and repository history; it must not contain personal preferences, machine-specific values, or session identifiers.
+1. Determine whether the workspace is a Git repository.
+2. If it is not a Git repository, create `<workspace-root>/.memory/` without asking about Git visibility.
+3. If it is a Git repository, ask:
 
-If the user declines workspace memory, proceed without creating it. Do not repeat the question during the same task.
+   > Should workspace memory remain private, or be available to commit to the repository for the team?
 
-If `.memory/` is already tracked and the user chooses private memory, explain that `.gitignore` does not untrack existing files and obtain approval before changing Git tracking. If the user chooses committed memory but `.memory/` is ignored, ask before removing the applicable ignore entry.
+4. Apply the answer as follows:
+   - **Private:** Create `<workspace-root>/.memory/` and ensure `/.memory/` is listed in the root `.gitignore`.
+   - **Repository-shared:** Create `<workspace-root>/.memory/` and do not add it to `.gitignore`.
+
+Creating repository-shared memory does not authorize a Git commit.
+
+If `.memory/` already exists in a Git repository, determine its current Git visibility using non-mutating checks:
+
+- If it is tracked, treat it as repository-shared.
+- If it is ignored and untracked, treat it as private.
+- If it is neither tracked nor ignored, ask whether it should be private or repository-shared. Add `/.memory/` to the root `.gitignore` only when the user chooses private.
+- If it is tracked and also matches an ignore rule, explain that `.gitignore` does not untrack existing files and ask whether to keep it repository-shared or make it private. Obtain explicit approval before changing Git tracking.
+
+Preserve an existing, unambiguous Git-visibility choice unless the user requests a change.
+
+Private memory may contain user- or machine-specific workspace facts, but never secrets or personal data. Repository-shared memory must contain only information suitable for the entire team and repository history; it must not contain personal preferences, machine-specific values, or session identifiers.
 
 ### Step 3: Initialize the memory index
 
