@@ -15,7 +15,7 @@ This rule does not require memory to be created when the user declines it. Do no
 
 ### Step 1: Inspect workspace memory
 
-1. Resolve the workspace or Git root.
+1. Resolve `<workspace-root>` as defined by the base workspace guidance.
 2. Inspect `<workspace-root>/.memory/`.
 3. If `.memory/` exists, read `.memory/MEMORY.md` first.
 4. Use the index descriptions to identify memories relevant to the current task.
