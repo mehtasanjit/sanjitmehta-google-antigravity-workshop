@@ -87,6 +87,18 @@ If a rule lacks the required metadata or applicability information, you must ins
 
 If a skill lacks `name` or `description` metadata, you must inspect all instructions made available for that skill to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply an unrelated skill.
 
+## Mandatory Environment Gate
+
+Before executing project code, running a toolchain-dependent command, invoking a runtime or package manager, creating or changing an environment, or installing or synchronizing dependencies, you must:
+
+1. Read and apply the complete `workspace-environment-initialization` rule in `<workspace-root>/.agents/rules/workspace-environment-initialization.md`.
+2. Identify, read, and apply every environment or toolchain skill relevant to the runtimes, environment managers, package managers, service platforms, and tools involved.
+3. Resolve and report the exact project environment, runtime, and executable that will be used before running the command.
+
+You must not bypass applicable environment or toolchain guidance by falling back to a system runtime, global environment, or environment shared by unrelated projects. Use a base or system runtime only when and as permitted by the applicable skill.
+
+If no suitable project-specific environment exists, you must stop and follow the applicable skill's approval workflow before creating one. This gate is mandatory for toolchain-dependent work and does not depend on IDE rule activation or model-decision metadata.
+
 ## Workspace Memory
 
 You must apply the complete `workspace-memory` rule in `<workspace-root>/.agents/rules/workspace-memory.md` to every workspace task.
