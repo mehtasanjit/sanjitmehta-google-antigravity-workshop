@@ -68,8 +68,10 @@ Before starting task work, you must:
    - `Model Decision`: Apply when its summary and applicability match the task.
    - `Glob`: Apply when the task reads, creates, or changes a matching file.
 4. Inspect each skill's `SKILL.md`. Read its `name` and `description` frontmatter when present.
-5. Read every applicable rule and skill completely before acting.
-6. Load supporting references only when needed.
+5. Treat a skill as applicable when the user explicitly invokes it or its description matches the task being performed.
+6. Read every applicable rule and skill completely before acting.
+7. You must use every applicable skill for the parts of the task it governs. Merely reading a skill does not satisfy this requirement.
+8. Load supporting references only when needed.
 
 If metadata is missing, read the complete file. If applicability is still unclear, ask the user. Do not apply unrelated guidance.
 
