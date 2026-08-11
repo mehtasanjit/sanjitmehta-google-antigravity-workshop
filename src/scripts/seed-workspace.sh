@@ -6,7 +6,7 @@ usage() {
   cat <<'EOF'
 Usage: seed-workspace.sh [--dry-run] <workspace-directory>
 
-Seed a workspace with the repository's baseline AGENTS.md, rules, and skills.
+Seed a workspace with the repository's baseline AGENTS.md, rules, skills, and subagents.
 Existing destination files are never overwritten.
 EOF
 }
@@ -32,6 +32,7 @@ fi
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd -- "$script_dir/../.." && pwd)"
 guidance_root="$repository_root/src/resources/workspace-guidance"
+subagents_root="$repository_root/src/resources/subagents/sdlc-subagents/.agents/agents"
 target_root="$1"
 
 target_name="$(basename -- "$target_root")"
@@ -54,6 +55,7 @@ required_sources=(
   "$guidance_root/agents/base.md"
   "$guidance_root/rules"
   "$guidance_root/skills"
+  "$subagents_root"
 )
 
 for required_source in "${required_sources[@]}"; do
@@ -65,6 +67,7 @@ done
 
 managed_directories=(
   "$target_root/.agents"
+  "$target_root/.agents/agents"
   "$target_root/.agents/rules"
   "$target_root/.agents/skills"
 )
@@ -94,6 +97,12 @@ while IFS= read -r -d '' source_file; do
   sources+=("$source_file")
   destinations+=("$target_root/.agents/skills/$relative_path")
 done < <(find "$guidance_root/skills" -type f -print0)
+
+while IFS= read -r -d '' source_file; do
+  relative_path="${source_file#"$subagents_root/"}"
+  sources+=("$source_file")
+  destinations+=("$target_root/.agents/agents/$relative_path")
+done < <(find "$subagents_root" -type f -print0)
 
 conflicts=()
 for destination in "${destinations[@]}"; do
