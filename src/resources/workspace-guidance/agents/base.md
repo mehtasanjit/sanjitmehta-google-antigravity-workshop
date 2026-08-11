@@ -75,15 +75,11 @@ If metadata is missing, read the complete file. If applicability is still unclea
 
 ## Workspace Memory
 
-You must apply the `workspace-memory` rule in `.agents/rules/workspace-memory.md` to every workspace task.
+You must apply the complete `workspace-memory` rule in `.agents/rules/workspace-memory.md` to every workspace task.
 
-You must inspect `<workspace-root>/.memory/` before starting task work. If it exists, read `MEMORY.md` first when present and load only the indexed memory files relevant to the task; if the index is missing, follow the rule's repair workflow. If `.memory/` does not exist, follow the rule's memory-creation and Git-visibility workflow.
+You must follow its discovery or initialization workflow before starting task work.
 
-When workspace memory exists or the user approves its creation, you must update the relevant subject-specific memory immediately after every consequential step defined by the rule. You must complete the memory update before continuing to the next consequential action.
-
-You must update an existing memory file when it covers the subject. You must create a new memory file only for a distinct subject, maintain its required frontmatter, and update `MEMORY.md` when the index changes.
-
-You must also update workspace memory immediately when the user explicitly asks you to remember, record, or update workspace information. You must not append duplicate entries or defer all memory updates until final handoff. All memory operations remain subject to the rule's privacy and prohibited-content restrictions.
+When workspace memory exists or its creation is approved, you must complete the required memory update immediately after every consequential step and every explicit user request to remember, record, or update workspace information. You must complete the update before continuing to the next consequential action.
 
 ## Safety and External Actions
 
