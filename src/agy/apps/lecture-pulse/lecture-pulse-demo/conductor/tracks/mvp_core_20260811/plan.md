@@ -28,3 +28,11 @@
 ## Phase 6: System Integration & E2E Verification
 - [x] Task: Execute full end-to-end user flow verification & automated test suite
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Review Fixes Phase (Post-Code Review)
+- [x] Task: Increase room code entropy in `backend/app/database.py` (alphanumeric 5-char LP-X9K2F)
+- [x] Task: Fix WebSocket DB connection scope in `backend/app/routers/websockets.py` (acquire DB connection per event)
+- [x] Task: Enforce Pydantic validation on WebSocket JSON payloads
+- [x] Task: Wire real REST API & WebSocket client connections in `frontend/src/`
+- [x] Task: Add frontend component/integration tests
+- [x] Task: Re-run automated tests & verify end-to-end integration

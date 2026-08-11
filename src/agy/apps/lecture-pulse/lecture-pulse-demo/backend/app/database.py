@@ -1,7 +1,6 @@
-"""Database module for Lecture Pulse session management."""
-
 import os
 import random
+import string
 import aiosqlite
 from typing import AsyncGenerator
 
@@ -61,12 +60,15 @@ async def get_db() -> AsyncGenerator[aiosqlite.Connection, None]:
 
 
 async def generate_unique_code(db: aiosqlite.Connection) -> str:
-    """Generates a unique 6-character room code (e.g. LP-392)."""
+    """Generates a unique room code (e.g. LP-X9K2F)."""
     while True:
-        digits = "".join(random.choices("0123456789", k=3))
-        code = f"LP-{digits}"
+        chars = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        code = f"LP-{chars}"
         query = "SELECT 1 FROM sessions WHERE code = ?"
         async with db.execute(query, (code,)) as cursor:
             row = await cursor.fetchone()
             if not row:
                 return code
+
+
+generate_session_code = generate_unique_code

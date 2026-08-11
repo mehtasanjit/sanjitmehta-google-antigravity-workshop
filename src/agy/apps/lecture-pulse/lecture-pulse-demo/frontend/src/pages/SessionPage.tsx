@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { ThumbsUp, Send, HelpCircle, MessageSquare, ArrowLeft } from 'lucide-react'
 
@@ -14,27 +14,108 @@ function SessionPage() {
   const { code } = useParams<{ code: string }>()
   const cleanCode = (code || '').toUpperCase()
 
+  const [session, setSession] = useState<{ title: string; description?: string } | null>(null)
   const [activePulse, setActivePulse] = useState<string | null>(null)
   const [pulseMessage, setPulseMessage] = useState('')
   const [questionContent, setQuestionContent] = useState('')
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: '1',
-      content: 'Could you explain the difference between REST and WebSockets for long-lived connections?',
-      upvotes: 8,
-      hasUpvoted: false,
-      timestamp: '5m ago'
-    },
-    {
-      id: '2',
-      content: 'Do we need to install any external libraries for the SQLite integration next week?',
-      upvotes: 3,
-      hasUpvoted: false,
-      timestamp: '2m ago'
-    }
-  ])
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [upvotedIds, setUpvotedIds] = useState<string[]>([])
+  const socketRef = useRef<WebSocket | null>(null)
 
-  const handlePulse = (pulseType: string) => {
+  useEffect(() => {
+    // 1. Fetch initial session details
+    const fetchSessionDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/sessions/${cleanCode}`)
+        if (response.ok) {
+          const data = await response.json()
+          setSession({
+            title: data.title,
+            description: data.description,
+          })
+
+          const mappedQuestions = (data.questions || [])
+            .filter((q: any) => q.status === 'active')
+            .map((q: any) => ({
+              id: q.id.toString(),
+              content: q.text,
+              upvotes: q.upvotes,
+              hasUpvoted: false,
+              timestamp: 'Earlier',
+            }))
+          setQuestions(mappedQuestions)
+        }
+      } catch (err) {
+        console.error('Error fetching session details:', err)
+      }
+    }
+
+    fetchSessionDetails()
+
+    // 2. Connect WebSocket
+    const ws = new WebSocket(`ws://localhost:8000/ws/${cleanCode}`)
+    socketRef.current = ws
+
+    ws.onopen = () => {
+      console.log('WebSocket connected')
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        const type = (message.type || '').toUpperCase()
+
+        if (type === 'NEW_QUESTION') {
+          const q = message.question
+          if (q && q.status === 'active') {
+            setQuestions((prev) => {
+              if (prev.some((item) => item.id === q.id.toString())) {
+                return prev
+              }
+              const newQ: Question = {
+                id: q.id.toString(),
+                content: q.text,
+                upvotes: q.upvotes,
+                hasUpvoted: false,
+                timestamp: 'Just now',
+              }
+              return [newQ, ...prev]
+            })
+          }
+        } else if (type === 'UPVOTE_QUESTION') {
+          setQuestions((prev) => {
+            return prev
+              .map((q) => {
+                if (q.id === message.question_id.toString()) {
+                  return { ...q, upvotes: message.upvotes }
+                }
+                return q
+              })
+              .sort((a, b) => b.upvotes - a.upvotes)
+          })
+        } else if (type === 'UPDATE_QUESTION_STATUS' || type === 'QUESTION_UPDATED') {
+          const status = message.status
+          if (status && status !== 'active') {
+            setQuestions((prev) => prev.filter((q) => q.id !== message.question_id.toString()))
+          }
+        } else if (type === 'PULSE_UPDATE' || type === 'PULSE_EVENT') {
+          console.log('Pulse update received:', message.pulse_totals)
+        }
+      } catch (err) {
+        console.error('WebSocket parsing error:', err)
+      }
+    }
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected')
+    }
+
+    return () => {
+      ws.close()
+    }
+  }, [cleanCode])
+
+  const handlePulse = (pulseType: 'slower' | 'confused' | 'got_it') => {
     setActivePulse(pulseType)
     let message = ''
     switch (pulseType) {
@@ -44,7 +125,7 @@ function SessionPage() {
       case 'confused':
         message = 'Sent signal: Feeling confused ❓'
         break
-      case 'got-it':
+      case 'got_it':
         message = 'Sent signal: Understood perfectly! ✨'
         break
     }
@@ -52,35 +133,45 @@ function SessionPage() {
     setTimeout(() => {
       setPulseMessage('')
     }, 3000)
+
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'pulse',
+          pulse_type: pulseType,
+        })
+      )
+    }
   }
 
   const handleQuestionSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!questionContent.trim()) return
 
-    const newQuestion: Question = {
-      id: Date.now().toString(),
-      content: questionContent.trim(),
-      upvotes: 1,
-      hasUpvoted: true,
-      timestamp: 'Just now'
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'new_question',
+          text: questionContent.trim(),
+        })
+      )
+      setQuestionContent('')
     }
-
-    setQuestions([newQuestion, ...questions])
-    setQuestionContent('')
   }
 
   const handleUpvote = (id: string) => {
-    setQuestions(questions.map(q => {
-      if (q.id === id) {
-        return {
-          ...q,
-          upvotes: q.hasUpvoted ? q.upvotes - 1 : q.upvotes + 1,
-          hasUpvoted: !q.hasUpvoted
-        }
-      }
-      return q
-    }))
+    if (upvotedIds.includes(id)) return
+
+    setUpvotedIds((prev) => [...prev, id])
+
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'upvote_question',
+          question_id: parseInt(id, 10),
+        })
+      )
+    }
   }
 
   return (
@@ -93,12 +184,14 @@ function SessionPage() {
           </a>
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              Lecture Session
+              {session?.title || 'Lecture Session'}
               <span className="px-2.5 py-0.5 text-xs font-bold bg-indigo-500/15 text-indigo-400 rounded-full border border-indigo-500/25 tracking-wider uppercase">
                 {cleanCode}
               </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">Anonymous, secure, and low-pressure engagement</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {session?.description || 'Anonymous, secure, and low-pressure engagement'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -151,9 +244,9 @@ function SessionPage() {
 
               {/* Got It (Green) */}
               <button
-                onClick={() => handlePulse('got-it')}
+                onClick={() => handlePulse('got_it')}
                 className={`w-full flex items-center justify-between p-4 rounded-xl font-semibold border transition-all ${
-                  activePulse === 'got-it'
+                  activePulse === 'got_it'
                     ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10'
                     : 'bg-slate-900/50 border-white/5 text-slate-300 hover:border-emerald-500/30 hover:bg-slate-900/80'
                 }`}
@@ -233,9 +326,10 @@ function SessionPage() {
                     </div>
                     <button
                       onClick={() => handleUpvote(q.id)}
+                      disabled={upvotedIds.includes(q.id)}
                       className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all ${
-                        q.hasUpvoted
-                          ? 'bg-indigo-500/25 border-indigo-500 text-indigo-400 shadow-md shadow-indigo-500/5'
+                        upvotedIds.includes(q.id)
+                          ? 'bg-indigo-500/25 border-indigo-500 text-indigo-400 shadow-md shadow-indigo-500/5 cursor-not-allowed opacity-80'
                           : 'bg-slate-900/50 border-white/5 text-slate-400 hover:text-white hover:bg-slate-900/80'
                       }`}
                     >
@@ -255,3 +349,4 @@ function SessionPage() {
 }
 
 export default SessionPage
+

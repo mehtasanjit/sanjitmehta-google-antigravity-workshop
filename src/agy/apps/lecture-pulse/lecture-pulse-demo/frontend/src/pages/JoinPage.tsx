@@ -7,7 +7,7 @@ function JoinPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleJoin = (e: React.FormEvent) => {
+  const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
     // Clean and validate code
     const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '')
@@ -24,7 +24,20 @@ function JoinPage() {
     }
 
     setError('')
-    navigate(`/session/${cleanCode}`)
+    try {
+      const response = await fetch(`http://localhost:8000/api/sessions/${cleanCode}`)
+      if (response.status === 404) {
+        setError('Room code not found')
+        return
+      }
+      if (!response.ok) {
+        throw new Error('Failed to validate room code')
+      }
+      navigate(`/session/${cleanCode}`)
+    } catch (err) {
+      setError('Room code not found')
+      console.error(err)
+    }
   }
 
   return (

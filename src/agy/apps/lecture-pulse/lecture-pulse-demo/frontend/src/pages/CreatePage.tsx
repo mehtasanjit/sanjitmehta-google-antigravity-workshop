@@ -19,18 +19,35 @@ function CreatePage() {
     return `LP-${part1}${part2}`
   }
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
 
     setIsSubmitting(true)
     
-    // Simulate API call to create session
-    setTimeout(() => {
-      const newCode = generateRoomCode()
+    try {
+      const response = await fetch('http://localhost:8000/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim() || null,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create session')
+      }
+
+      const data = await response.json()
+      navigate(`/dashboard/${data.code}`, { state: { title: data.title, description: data.description || description } })
+    } catch (error) {
+      console.error('Error creating session:', error)
+    } finally {
       setIsSubmitting(false)
-      navigate(`/dashboard/${newCode}`, { state: { title, description } })
-    }, 1200)
+    }
   }
 
   return (

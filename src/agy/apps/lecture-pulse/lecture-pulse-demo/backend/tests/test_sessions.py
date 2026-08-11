@@ -14,7 +14,7 @@ def test_create_session(client: TestClient):
     assert data["title"] == "Introduction to Python"
     assert "code" in data
     assert data["code"].startswith("LP-")
-    assert len(data["code"]) == 6
+    assert len(data["code"]) == 8
     assert "created_at" in data
 
 

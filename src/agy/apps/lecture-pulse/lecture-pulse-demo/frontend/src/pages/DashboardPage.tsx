@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { 
   Smile, Frown, Hourglass, CheckCircle2, Trash2, 
@@ -17,21 +17,122 @@ function DashboardPage() {
   const cleanCode = (code || '').toUpperCase()
 
   const state = location.state as { title?: string; description?: string } | null
-  const lectureTitle = state?.title || 'CS 101: Introduction to WebSockets & Real-time Systems'
-  const lectureDesc = state?.description || 'Active lecture covering low-latency communications, pub-sub architectures, and bidirectional connection pooling.'
+  const [session, setSession] = useState<{ title: string; description?: string } | null>(null)
+  
+  const lectureTitle = session?.title || state?.title || 'CS 101: Introduction to WebSockets & Real-time Systems'
+  const lectureDesc = session?.description || state?.description || 'Active lecture covering low-latency communications, pub-sub architectures, and bidirectional connection pooling.'
 
   const [presenterMode, setPresenterMode] = useState(false)
   const [pulse, setPulse] = useState({
-    gotIt: 18,
-    slower: 5,
-    confused: 3
+    gotIt: 0,
+    slower: 0,
+    confused: 0
   })
 
-  const [questions, setQuestions] = useState<ModQuestion[]>([
-    { id: '1', content: 'Could you explain the difference between REST and WebSockets for long-lived connections?', upvotes: 12 },
-    { id: '2', content: 'Do we need to install any external libraries for the SQLite integration next week?', upvotes: 7 },
-    { id: '3', content: 'How do you prevent connection starvation under massive broadcast traffic?', upvotes: 4 },
-  ])
+  const [questions, setQuestions] = useState<ModQuestion[]>([])
+  const socketRef = useRef<WebSocket | null>(null)
+
+  useEffect(() => {
+    // 1. Fetch initial session details
+    const fetchSessionDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/sessions/${cleanCode}`)
+        if (response.ok) {
+          const data = await response.json()
+          setSession({
+            title: data.title,
+            description: data.description,
+          })
+          
+          setPulse({
+            gotIt: data.pulse_totals?.got_it ?? data.pulse_totals?.gotIt ?? 0,
+            slower: data.pulse_totals?.slower ?? 0,
+            confused: data.pulse_totals?.confused ?? 0,
+          })
+
+          const activeQuestions = (data.questions || [])
+            .filter((q: any) => q.status === 'active')
+            .map((q: any) => ({
+              id: q.id.toString(),
+              content: q.text,
+              upvotes: q.upvotes,
+            }))
+            .sort((a: any, b: any) => b.upvotes - a.upvotes)
+          setQuestions(activeQuestions)
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard details:', err)
+      }
+    }
+
+    fetchSessionDetails()
+
+    // 2. Connect WebSocket
+    const ws = new WebSocket(`ws://localhost:8000/ws/${cleanCode}`)
+    socketRef.current = ws
+
+    ws.onopen = () => {
+      console.log('Dashboard WebSocket connected')
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        const type = (message.type || '').toUpperCase()
+
+        if (type === 'PULSE_EVENT' || type === 'PULSE_UPDATE') {
+          if (message.pulse_totals) {
+            setPulse({
+              gotIt: message.pulse_totals.got_it ?? message.pulse_totals.gotIt ?? 0,
+              slower: message.pulse_totals.slower ?? 0,
+              confused: message.pulse_totals.confused ?? 0,
+            })
+          }
+        } else if (type === 'NEW_QUESTION') {
+          const q = message.question
+          if (q && q.status === 'active') {
+            setQuestions((prev) => {
+              if (prev.some((item) => item.id === q.id.toString())) {
+                return prev
+              }
+              const newQ: ModQuestion = {
+                id: q.id.toString(),
+                content: q.text,
+                upvotes: q.upvotes,
+              }
+              return [...prev, newQ].sort((a, b) => b.upvotes - a.upvotes)
+            })
+          }
+        } else if (type === 'UPVOTE_QUESTION') {
+          setQuestions((prev) => {
+            return prev
+              .map((q) => {
+                if (q.id === message.question_id.toString()) {
+                  return { ...q, upvotes: message.upvotes }
+                }
+                return q
+              })
+              .sort((a, b) => b.upvotes - a.upvotes)
+          })
+        } else if (type === 'UPDATE_QUESTION_STATUS' || type === 'QUESTION_UPDATED') {
+          const status = message.status
+          if (status && status !== 'active') {
+            setQuestions((prev) => prev.filter((q) => q.id !== message.question_id.toString()))
+          }
+        }
+      } catch (err) {
+        console.error('WebSocket parsing error in dashboard:', err)
+      }
+    }
+
+    ws.onclose = () => {
+      console.log('Dashboard WebSocket disconnected')
+    }
+
+    return () => {
+      ws.close()
+    }
+  }, [cleanCode])
 
   const totalVotes = pulse.gotIt + pulse.slower + pulse.confused
   const getPercent = (count: number) => {
@@ -40,20 +141,40 @@ function DashboardPage() {
   }
 
   const handleMarkAnswered = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id))
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'update_question_status',
+          question_id: parseInt(id, 10),
+          status: 'answered',
+        })
+      )
+    }
   }
 
   const handleDismiss = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id))
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'update_question_status',
+          question_id: parseInt(id, 10),
+          status: 'dismissed',
+        })
+      )
+    }
   }
 
   const simulateRandomPulse = () => {
-    const options = ['gotIt', 'slower', 'confused']
-    const choice = options[Math.floor(Math.random() * options.length)] as 'gotIt' | 'slower' | 'confused'
-    setPulse(prev => ({
-      ...prev,
-      [choice]: prev[choice] + 1
-    }))
+    const options = ['got_it', 'slower', 'confused']
+    const choice = options[Math.floor(Math.random() * options.length)] as 'got_it' | 'slower' | 'confused'
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'pulse',
+          pulse_type: choice,
+        })
+      )
+    }
   }
 
   if (presenterMode) {

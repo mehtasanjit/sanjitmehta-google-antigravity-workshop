@@ -1,9 +1,10 @@
 """Router for WebSocket connection endpoints."""
 
 import aiosqlite
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 
-from backend.app import database
+from backend.app import database, schemas
 from backend.app.websocket_manager import manager
 
 router = APIRouter(tags=["websockets"])
@@ -13,12 +14,13 @@ router = APIRouter(tags=["websockets"])
 async def websocket_endpoint(
     websocket: WebSocket,
     session_code: str,
-    db: aiosqlite.Connection = Depends(database.get_db),
 ):
     """Handles bidirectional WebSocket messages for a session."""
-    query = "SELECT 1 FROM sessions WHERE code = ?"
-    async with db.execute(query, (session_code,)) as cursor:
-        row = await cursor.fetchone()
+    async with aiosqlite.connect(database.DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        query = "SELECT 1 FROM sessions WHERE code = ?"
+        async with db.execute(query, (session_code,)) as cursor:
+            row = await cursor.fetchone()
 
     if not row:
         await websocket.close(code=4004, reason="Session not found")
@@ -30,10 +32,46 @@ async def websocket_endpoint(
         while True:
             data = await websocket.receive_json()
             event_type = data.get("type")
+            if isinstance(event_type, str):
+                event_type_upper = event_type.upper()
+                if event_type_upper in ("PULSE", "PULSE_EVENT"):
+                    data["type"] = "PULSE_EVENT"
+                    event_type = "PULSE_EVENT"
+                elif event_type_upper == "NEW_QUESTION":
+                    data["type"] = "NEW_QUESTION"
+                    event_type = "NEW_QUESTION"
+                elif event_type_upper == "UPVOTE_QUESTION":
+                    data["type"] = "UPVOTE_QUESTION"
+                    event_type = "UPVOTE_QUESTION"
+                elif event_type_upper == "UPDATE_QUESTION_STATUS":
+                    data["type"] = "UPDATE_QUESTION_STATUS"
+                    event_type = "UPDATE_QUESTION_STATUS"
 
-            if event_type == "PULSE_EVENT":
-                pulse_type = data.get("pulse_type")
-                if pulse_type:
+            if "pulse_type" in data and data["pulse_type"] == "got-it":
+                data["pulse_type"] = "got_it"
+
+            # Validate input message
+            try:
+                if event_type == "PULSE_EVENT":
+                    validated = schemas.WebSocketPulseMessage(**data)
+                elif event_type == "NEW_QUESTION":
+                    validated = schemas.WebSocketNewQuestionMessage(**data)
+                elif event_type == "UPVOTE_QUESTION":
+                    validated = schemas.WebSocketUpvoteQuestionMessage(**data)
+                elif event_type == "UPDATE_QUESTION_STATUS":
+                    validated = schemas.WebSocketUpdateQuestionStatusMessage(**data)
+                else:
+                    # Invalid or unhandled event type
+                    continue
+            except ValidationError:
+                # Silently ignore invalid schema messages and continue listening
+                continue
+
+            async with aiosqlite.connect(database.DB_PATH) as db:
+                db.row_factory = aiosqlite.Row
+
+                if event_type == "PULSE_EVENT":
+                    pulse_type = validated.pulse_type
                     insert_query = (
                         "INSERT INTO pulses (session_code, type) "
                         "VALUES (?, ?)"
@@ -59,9 +97,8 @@ async def websocket_endpoint(
                         {"type": "PULSE_EVENT", "pulse_totals": totals},
                     )
 
-            elif event_type == "NEW_QUESTION":
-                text = data.get("text")
-                if text:
+                elif event_type == "NEW_QUESTION":
+                    text = validated.text
                     insert_query = (
                         "INSERT INTO questions (session_code, text) "
                         "VALUES (?, ?)"
@@ -91,9 +128,8 @@ async def websocket_endpoint(
                         },
                     )
 
-            elif event_type == "UPVOTE_QUESTION":
-                q_id = data.get("question_id")
-                if q_id is not None:
+                elif event_type == "UPVOTE_QUESTION":
+                    q_id = validated.question_id
                     update_query = (
                         "UPDATE questions SET upvotes = upvotes + 1 "
                         "WHERE id = ?"
@@ -115,10 +151,9 @@ async def websocket_endpoint(
                             },
                         )
 
-            elif event_type == "UPDATE_QUESTION_STATUS":
-                q_id = data.get("question_id")
-                status = data.get("status")
-                if q_id is not None and status:
+                elif event_type == "UPDATE_QUESTION_STATUS":
+                    q_id = validated.question_id
+                    status = validated.status
                     update_query = (
                         "UPDATE questions SET status = ? WHERE id = ?"
                     )
