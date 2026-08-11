@@ -41,12 +41,46 @@ The intended location for a completed, runnable reference implementation. The de
 
 The reference implementation has not yet been added to this repository.
 
+## Set up a new workspace
+
+Run these commands from the `src/agy/apps/lecture-pulse/` directory.
+
+1. Create a new participant workspace. Use a distinct name so the prepared workspace remains unchanged:
+
+   ```bash
+   mkdir lecture-pulse-work-1
+   ```
+
+2. Seed the workspace with the baseline `AGENTS.md`, rules, and skills:
+
+   ```bash
+   ../../../scripts/seed-workspace.sh lecture-pulse-work-1
+   ```
+
+   The seed script does not overwrite existing files or create workspace memory.
+
+3. If the exercise requires Google Agents CLI workflows, import its skills:
+
+   ```bash
+   python3 ../../../scripts/import_google_agents_cli_skills.py lecture-pulse-work-1
+   ```
+
+4. If the exercise requires specification-driven development with Conductor, import the plugin:
+
+   ```bash
+   python3 ../../../scripts/import_conductor_plugin.py lecture-pulse-work-1
+   ```
+
+   The import commands download content from the official upstream repositories and require network access. Use `--dry-run` to download and validate the content without changing the workspace. Existing installations are not replaced unless `--force` is supplied.
+
+5. Open `lecture-pulse-work-1/` as the workspace and read its `AGENTS.md` before starting the exercise.
+
 ## Workshop flow
 
 1. Read [`docs/requirements.md`](docs/requirements.md).
-2. Open the [`lecture-pulse-work`](lecture-pulse-work/) workspace.
-3. Read [`lecture-pulse-work/AGENTS.md`](lecture-pulse-work/AGENTS.md) before starting work.
-4. Use the installed skills and Conductor workflow to clarify requirements, agree on the design, plan the work, and implement the application.
+2. Open either the prepared [`lecture-pulse-work`](lecture-pulse-work/) workspace or the new participant workspace you created.
+3. Read the selected workspace's `AGENTS.md` before starting work.
+4. Use the applicable installed skills and, when installed, the Conductor workflow to clarify requirements, agree on the design, plan the work, and implement the application.
 5. Verify the completed behavior against the requirements and record anything incomplete or unverified.
 6. Compare the result with `lecture-pulse-demo/` when the reference implementation becomes available.
 
