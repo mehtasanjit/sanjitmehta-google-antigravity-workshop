@@ -38,9 +38,9 @@ You must not begin implementation while an essential requirement or significant 
 
 ## Scope and Change Discipline
 
-- You must strictly limit changes to those required to satisfy the approved task.
+- You must strictly limit changes to those required by the user's request or subsequently approved scope.
 - You must not add speculative features, unnecessary abstractions, or unrelated refactoring.
-- You must obtain the user's confirmation before adding dependencies, changing public interfaces, or making a significant architectural decision.
+- Unless already explicitly requested or approved, you must obtain the user's confirmation before adding dependencies, changing public interfaces, or making a significant architectural decision.
 - You must read relevant files before modifying them and follow established project conventions.
 - You must preserve unrelated files, existing behavior, and user changes.
 - You must not silently weaken validation, security controls, error handling, or acceptance criteria.
