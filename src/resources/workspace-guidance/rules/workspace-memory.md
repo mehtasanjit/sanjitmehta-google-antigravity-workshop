@@ -2,14 +2,14 @@
 
 ## Rule Metadata
 
-- **Summary:** Discover, read, create, and maintain durable workspace memory in `.memory/`.
+- **Summary:** Discover, read, create, and continuously maintain indexed workspace memory in `.memory/`.
 - **Activation Mode:** Always On
 
 ## Applicability
 
 You must apply this rule to every task performed in a workspace.
 
-This rule does not require memory to be created when the user declines it. Do not store temporary notes, conversation transcripts, secrets, credentials, or information unrelated to the workspace.
+This rule does not require memory to be created when the user declines it. Do not store temporary notes, conversation transcripts, secrets, credentials, personal data, or information unrelated to the workspace.
 
 ## Workflow
 
@@ -18,13 +18,13 @@ This rule does not require memory to be created when the user declines it. Do no
 1. Resolve the workspace or Git root.
 2. Inspect `<workspace-root>/.memory/`.
 3. If `.memory/` exists, read `.memory/MEMORY.md` first.
-4. Read `.memory/active-context.md`, or its indexed equivalent, to determine the current focus, completed work, blockers, and next steps.
-5. Inspect the remaining memory files and read only those relevant to the current task.
+4. Use the index descriptions to identify memories relevant to the current task.
+5. Read only the relevant memory files.
 6. Do not load every memory file by default.
 
-If an existing memory store uses an equivalent file under a different name, preserve it and record the mapping in `MEMORY.md`. Do not create duplicate files only to enforce the recommended names.
+If `.memory/` exists without `MEMORY.md`, inspect the available memory-file names and frontmatter, then create or repair the index before making further memory updates.
 
-If `.memory/` exists without `MEMORY.md`, inspect its contents and create or repair the index when making memory updates. If it has no active-context file or equivalent, create `active-context.md` when the task produces useful continuation state.
+If an existing memory file lacks the required frontmatter, add it when that file is next updated. Do not create a duplicate file merely to apply the current format.
 
 ### Step 2: Ask before creating memory
 
@@ -37,37 +37,68 @@ Apply the answer as follows:
 - **Private:** Create `<workspace-root>/.memory/` and ensure `/.memory/` is listed in the root `.gitignore`.
 - **Committed:** Create `<workspace-root>/.memory/` and do not add it to `.gitignore`.
 
-Private memory may contain user- or machine-specific workspace facts, but never secrets. Committed memory must contain only information suitable for the entire team and repository history; it must not contain personal preferences or machine-specific values.
+Private memory may contain user- or machine-specific workspace facts, but never secrets or personal data. Committed memory must contain only information suitable for the entire team and repository history; it must not contain personal preferences, machine-specific values, or session identifiers.
 
 If the user declines workspace memory, proceed without creating it. Do not repeat the question during the same task.
 
 If `.memory/` is already tracked and the user chooses private memory, explain that `.gitignore` does not untrack existing files and obtain approval before changing Git tracking. If the user chooses committed memory but `.memory/` is ignored, ask before removing the applicable ignore entry.
 
-### Step 3: Initialize memory
+### Step 3: Initialize the memory index
 
-You must initialize these core files:
+Create only `.memory/MEMORY.md` during initialization.
 
-- `.memory/MEMORY.md`: A concise entry point containing critical reminders and links to memory files and authoritative workspace documents.
-- `.memory/active-context.md`: The current focus, recent completed work, blockers, and next steps required to continue effectively.
+`MEMORY.md` is the only reserved memory filename and does not require frontmatter.
 
-Keep both core files concise. `MEMORY.md` is an index, not a copy of the other memory files.
+Use this structure:
 
-Create the following files only when they have useful content:
+```md
+# Memory Index
 
-- `decisions.md`: Settled decisions and links to the requirements, specifications, discussions, or records that established them.
-- `discoveries.md`: Non-obvious findings, debugging lessons, project-specific traps, and useful verified commands.
-- `topics/<topic>.md`: Detailed memory for a specific component, integration, agent, or workflow.
+- [Memory title](memory-name.md) — concise description of when this memory is relevant
+```
 
-Create these situational files only when the information does not already have an authoritative home:
+You must:
 
-- `environment.md`: Established workspace environment facts. Include machine-specific facts only in private memory.
-- `preferences.md`: Personal working preferences. Create this file only when `.memory/` is private.
-- `progress.md`: Longer-term milestones when they no longer fit clearly in `active-context.md`.
-- `architecture.md`: Architectural recall when no authoritative architecture document exists.
+1. Keep `MEMORY.md` concise.
+2. Include one entry for every subject-specific memory file.
+3. Use each memory file's description in its index entry.
+4. Link to memory files using relative paths.
+5. Never duplicate detailed memory content in the index.
 
-Use lowercase kebab-case names for additional memory files. Link every memory file from `MEMORY.md` and do not duplicate its detailed content in the index.
+Do not create empty category files during initialization.
 
-### Step 4: Keep authoritative information outside memory
+### Step 4: Create subject-specific memory files
+
+Create a new memory file only when durable information represents a distinct subject and no existing memory file covers it.
+
+Use a stable lowercase kebab-case filename and require this frontmatter:
+
+```yaml
+---
+name: memory-name
+description: One concise sentence explaining when this memory is relevant
+metadata:
+  node_type: memory
+  type: project
+  modified: 2026-08-10T00:00:00Z
+---
+```
+
+You must:
+
+1. Make `name` match the filename without `.md`.
+2. Keep `description` concise and specific enough to support relevance decisions.
+3. Set `metadata.node_type` to `memory`.
+4. Set `metadata.type` to `project`.
+5. Set `metadata.modified` to the current RFC 3339 timestamp whenever the file changes consequentially.
+6. Keep one coherent memory subject per file.
+7. Add the file to `MEMORY.md` immediately after creating it.
+
+The body format may follow the needs of the subject. Keep it concise, factual, and easy to update.
+
+Optional metadata may include `status`, `related`, `sources`, and `originSessionId`. Use `originSessionId` only in private memory. Do not require optional metadata when it provides no value.
+
+### Step 5: Keep authoritative information outside memory
 
 Memory is a recall and continuity layer. It must not replace authoritative workspace information.
 
@@ -80,14 +111,14 @@ You must store:
 
 Memory files must link to authoritative sources instead of copying them. If the authoritative location does not yet exist, ask the user before treating memory as its permanent replacement.
 
-### Step 5: Use memory
+### Step 6: Use memory
 
 1. Use relevant memory to avoid repeating workspace discovery and settled decisions.
 2. Treat current user instructions, `AGENTS.md`, applicable rules, approved requirements, specifications, source files, and configuration as more authoritative than memory.
-3. When memory conflicts with the current workspace, follow the authoritative source and correct the memory.
+3. When memory conflicts with an authoritative source, follow that source and correct the memory.
 4. Ask the user when a conflict cannot be resolved from authoritative workspace sources.
 
-### Step 6: Maintain memory
+### Step 7: Maintain memory continuously
 
 When workspace memory exists or the user approves its creation, you must update it immediately after every consequential step and before continuing to the next consequential action.
 
@@ -100,19 +131,17 @@ A consequential step includes:
 - A verification result that confirms behavior or exposes a limitation.
 - A blocker, unresolved issue, completed milestone, or change to the next required action.
 
-You must not wait until final handoff to record all memory updates. After each consequential step, update the relevant topic file and `active-context.md`. Update `MEMORY.md` only when its critical reminders or file index changes.
+After each consequential step, you must:
 
-You must:
+1. Identify the existing memory file for that subject.
+2. Update that file and its `metadata.modified` timestamp.
+3. Create a new memory file only when no existing file covers the subject.
+4. Update `MEMORY.md` only when its file index or an indexed description changes.
+5. Complete the memory update before beginning the next consequential action.
 
-1. Keep entries concise, factual, and scoped to the workspace.
-2. Update an existing entry instead of adding a duplicate.
-3. Remove or correct information shown to be obsolete by the completed work.
-4. Record decisions only after they are approved or established by authoritative project sources.
-5. Keep `MEMORY.md` short and move details into relevant topic files.
-6. Keep `active-context.md` current; remove completed or obsolete continuation items.
-7. Never store secrets, credentials, personal data, or complete command output.
+You must not create a new file for every step, append duplicate entries, or defer all memory updates until final handoff.
 
-Do not record transient implementation details that can be recovered easily from the repository.
+You must correct or supersede obsolete information, record decisions only after they are approved or established, and avoid transient details that can be recovered easily from the repository.
 
 ## Handoff
 
