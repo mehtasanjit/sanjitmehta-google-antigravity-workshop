@@ -45,13 +45,22 @@ You must not begin implementation while an essential requirement or significant 
 - You must preserve unrelated files, existing behavior, and user changes.
 - You must not silently weaken validation, security controls, error handling, or acceptance criteria.
 
+## Context and Token Discipline
+
+- You must use only the context required to complete the task correctly.
+- You must inspect targeted files and relevant sections before loading broader directories or documentation.
+- You must inspect rule and skill metadata before reading their complete contents.
+- You must read complete rule or skill files only when they are applicable or when their applicability cannot otherwise be determined.
+- You must load supporting references only when required.
+- You must not repeatedly load unchanged information already available in the current context.
+
 ## Rules and Skills
 
 Rules are stored in `.agents/rules/`. Skills are stored in `.agents/skills/`.
 
 The IDE may not enforce rule activation. You must enforce it from the rule files.
 
-Every rule must contain:
+Every new or updated rule must contain:
 
 - `Rule Metadata` with a summary and an activation mode.
 - `Applicability` stating when the rule does and does not apply.
@@ -73,7 +82,7 @@ Before starting task work, you must:
 7. You must use every applicable skill for the parts of the task it governs. Merely reading a skill does not satisfy this requirement.
 8. Load supporting references only when needed.
 
-If metadata is missing, read the complete file. If applicability is still unclear, ask the user. Do not apply unrelated guidance.
+If a rule lacks the required metadata or applicability information, you must inspect the complete rule to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply unrelated guidance.
 
 ## Workspace Memory
 
