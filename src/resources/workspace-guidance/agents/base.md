@@ -9,7 +9,7 @@ These guidelines define the mandatory baseline behavior for an agent working in 
 - You must follow all applicable platform and workspace instructions.
 - You must ensure that your understanding, actions, and output remain aligned with the user's explicit request and intended scope.
 - You must treat approved requirements, specifications, and recorded design decisions as authoritative for product behavior.
-- You must apply the relevant guidance under `<workspace-root>/.agents/rules/` and `<workspace-root>/.agents/skills/` within the approved scope.
+- You must apply the relevant guidance under `<workspace-root>/.agents/rules/` and `<workspace-root>/.agents/skills/`, together with applicable host-provided skills, within the requested or approved scope.
 - You must not allow workflow frameworks or technical skills to introduce requirements or expand the task beyond the approved specification.
 - If the applicable instruction hierarchy does not resolve a material conflict, you must stop and ask the user before proceeding.
 
@@ -58,7 +58,7 @@ You must not begin implementation while an essential requirement or significant 
 
 In a Git repository, `<workspace-root>` is the repository root. Otherwise, it is the workspace directory selected for the task.
 
-Rules are stored in `<workspace-root>/.agents/rules/`. Skills are stored in `<workspace-root>/.agents/skills/`.
+Rules are stored in `<workspace-root>/.agents/rules/`. Workspace-local skills are stored in `<workspace-root>/.agents/skills/`. Additional installed or bundled skills may be exposed by the agent host.
 
 The IDE may not enforce rule activation. You must enforce it from the rule files.
 
@@ -71,21 +71,21 @@ Every new or updated rule must contain:
 
 Before starting task work, you must:
 
-1. Identify the available rules and skills.
+1. Identify the available rules, workspace-local skills, and host-provided installed or bundled skills.
 2. Inspect each rule file. Read its `Rule Metadata` and `Applicability` sections when present.
 3. Apply rule modes as follows:
    - `Always On`: Read and apply the complete rule.
    - `Manual`: Apply only when the user invokes the rule.
    - `Model Decision`: Apply when its summary and applicability match the task.
    - `Glob`: Apply when the task reads, creates, or changes a matching file.
-4. Inspect each skill's `SKILL.md`. Read its `name` and `description` frontmatter when present.
-5. Treat a skill as applicable when the user explicitly invokes it or its description matches the task being performed.
-6. Read every applicable rule and skill completely before acting.
+4. Inspect each workspace-local skill's `SKILL.md` and the equivalent metadata or instructions exposed for each host-provided skill. Read its `name` and `description` when present.
+5. Treat every skill explicitly invoked by the user or whose description matches the task as applicable. A task may require multiple skills from different sources or for different parts of the work.
+6. Read every applicable rule completely and all instructions made available for every applicable skill before acting, using the access mechanism provided by the skill's source.
 7. You must use every applicable skill for the parts of the task it governs. Merely reading a skill does not satisfy this requirement.
 
 If a rule lacks the required metadata or applicability information, you must inspect the complete rule to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply unrelated guidance.
 
-If a skill lacks `name` or `description` frontmatter, you must inspect the complete `SKILL.md` to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply an unrelated skill.
+If a skill lacks `name` or `description` metadata, you must inspect all instructions made available for that skill to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply an unrelated skill.
 
 ## Workspace Memory
 
@@ -101,7 +101,7 @@ When workspace memory exists or its creation is approved, you must complete the 
 - You must not perform destructive, irreversible, or externally visible actions without explicit approval.
 - You must not commit, push, publish, deploy, modify cloud resources, or change external systems unless explicitly requested.
 - You must resolve exact targets before any potentially destructive operation and prefer reversible actions where practical.
-- You must stop and ask for guidance when an action requires additional authority or materially expands the approved scope.
+- You must stop and ask for guidance when an action requires additional authority or materially expands the requested or approved scope.
 
 ## Verification and Handoff
 

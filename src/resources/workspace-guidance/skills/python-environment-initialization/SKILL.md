@@ -10,6 +10,8 @@ description: >
 
 # Python Environment Initialization
 
+This skill governs only Python-specific environment and dependency work. When a task uses multiple toolchains, limit this skill to the Python portion of the work.
+
 ## Workflow
 
 ### 1. Inspect the Python project
@@ -19,18 +21,19 @@ description: >
 3. Treat applicable instructions and unambiguous project configuration as authoritative.
 4. Do not execute Python, run a package manager, create an environment, install dependencies, or modify files during this step.
 
-If runtime, environment, or dependency indicators conflict, stop and ask the user which configuration is authoritative.
+If authoritative runtime, environment, or dependency indicators conflict and applicable instructions do not resolve the conflict, stop and ask the user which configuration is authoritative.
 
 ### 2. Discover the Python environment
 
-1. Ask whether the user wants to provide the environment path or authorize automated, read-only discovery.
-2. If the user provides a path, record it without running discovery commands.
-3. If the user authorizes discovery, inspect project configuration, known environment locations, and non-mutating environment-manager information.
-4. Do not use commands that can create, synchronize, update, or remove an environment or lock file during discovery.
-5. Identify the exact interpreter path and determine whether the environment is associated with the current project.
-6. Reuse an environment only when it is project-specific, compatible with the required Python version, and suitable for the established dependency workflow.
-7. Do not reuse system Python, a global environment, or an environment shared by unrelated projects as the project environment.
-8. Do not assume `.venv` is correct solely because the directory exists.
+1. Use an environment path or discovery result already provided by the user or platform-provided environment context. Reuse existing read-only discovery authorization when it covers the same scope.
+2. If a suitable project environment remains unknown, ask whether the user wants to provide its path or authorize automated, read-only discovery.
+3. If the user provides a path, record it without running discovery commands.
+4. If the user authorizes discovery, inspect project configuration, known environment locations, and non-mutating environment-manager information.
+5. Do not use commands that can create, synchronize, update, or remove an environment or lock file during discovery.
+6. Identify the exact interpreter path and determine whether the environment is associated with the current project.
+7. Reuse an environment only when it is project-specific, compatible with the required Python version, and suitable for the established dependency workflow.
+8. Do not reuse system Python, a global environment, or an environment shared by unrelated projects as the project environment.
+9. Do not assume `.venv` is correct solely because the directory exists.
 
 If compatibility or project association cannot be established from files alone, obtain authorization before running a non-mutating check with the exact interpreter or established manager.
 
@@ -50,7 +53,7 @@ Follow this precedence:
 6. Use the resolved environment's interpreter with `-m pip` for a requirements-based project only when no higher-level manager is established.
 7. For a new project with no established dependency workflow, recommend `uv` and obtain approval before establishing it.
 
-Do not infer pip usage from a requirements file when another manager is established. Do not introduce a second manager, create a competing lock file, or replace the established workflow without explicit approval.
+Do not infer pip usage from a requirements file when another manager is established. Do not introduce a second manager, create a competing lock file, or replace the established workflow unless the change was explicitly requested or approved.
 
 If multiple managers appear authoritative or the established manager is unclear, stop and ask the user.
 
@@ -71,9 +74,9 @@ Before changing the Python environment:
 2. Explain whether the environment will be reused, created, or synchronized.
 3. Identify the commands to be run and the packages, tools, configuration files, and lock files that may change.
 4. Identify any required installation, download, or network access.
-5. Obtain explicit approval for environment creation, synchronization, installation, temporary tool execution, and dependency or lock-file changes.
+5. Obtain explicit approval for environment creation, synchronization, installation, temporary tool execution, and dependency or lock-file changes unless the same action and scope were explicitly requested or already approved.
 
-Reuse an explicit approval already obtained for the same action and scope. Do not ask for duplicate approval. Obtain new approval when the action or expected changes expand.
+Reuse an explicit request or approval already obtained for the same action and scope. Do not ask for duplicate approval. Obtain new approval when the action or expected changes expand.
 
 ### 6. Configure and use the environment
 
@@ -85,7 +88,7 @@ After resolving the environment and obtaining any required approvals:
 4. Do not depend on shell activation when a manager command or exact executable path is available.
 5. Treat commands that automatically create or synchronize an environment as environment changes, even when their primary purpose is command execution.
 6. Use locked or frozen behavior when supported and no dependency change is intended.
-7. Install only dependencies required by the approved task.
+7. Install only dependencies required by the requested or approved task.
 8. Preserve existing versions unless a change is required and approved.
 9. Update dependency declarations and lock files only for intentional, approved dependency changes.
 10. Do not bypass the established manager or mix environments and managers.
@@ -114,7 +117,7 @@ Do not expose credentials, secret values, private index URLs, or the complete pr
 
 Stop and ask the user before proceeding when:
 
-- The user has neither provided an environment path nor authorized discovery.
+- A suitable project environment cannot be established from the provided context, and the user has neither provided an environment path nor authorized discovery.
 - Runtime, environment, dependency, or lock-file indicators conflict.
 - No compatible Python interpreter is available.
 - The environment is ambiguous, incompatible, global, or associated with another project.
