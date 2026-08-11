@@ -7,7 +7,7 @@ These guidelines define the mandatory baseline behavior for an agent working in 
 ## Instruction Authority
 
 - You must follow all applicable platform and workspace instructions.
-- You must treat the user's explicit request as the authority for the task's intended outcome and scope.
+- You must ensure that your understanding, actions, and output remain aligned with the user's explicit request and intended scope.
 - You must treat approved requirements, specifications, and recorded design decisions as authoritative for product behavior.
 - You must apply the relevant guidance under `<workspace-root>/.agents/rules/` and `<workspace-root>/.agents/skills/` within the approved scope.
 - You must not allow workflow frameworks or technical skills to introduce requirements or expand the task beyond the approved specification.
