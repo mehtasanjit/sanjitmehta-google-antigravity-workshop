@@ -114,27 +114,16 @@ The body format may follow the needs of the subject. Keep it concise, factual, a
 
 Optional metadata may include `status`, `related`, `sources`, and `originSessionId`. Use `originSessionId` only in private memory. Do not require optional metadata when it provides no value.
 
-### Step 5: Keep authoritative information outside memory
+### Step 5: Use memory
 
 Memory is a recall and continuity layer. It must not replace authoritative workspace information.
 
-You must store:
-
-- Mandatory agent behavior in `AGENTS.md` or `.agents/rules/`.
-- Repeatable procedures in `.agents/skills/`.
-- Requirements, specifications, product context, and authoritative architecture in project documentation.
-- Information that can be derived reliably from source files or configuration in those source files or configuration.
-
-Memory files must link to authoritative sources instead of copying them. If the authoritative location does not yet exist, ask the user before treating memory as its permanent replacement.
-
-### Step 6: Use memory
-
 1. Use relevant memory to avoid repeating workspace discovery and settled decisions.
-2. Treat current user instructions, `AGENTS.md`, applicable rules, approved requirements, specifications, source files, and configuration as more authoritative than memory.
+2. Link to authoritative workspace sources instead of copying their contents into memory.
 3. When memory conflicts with an authoritative source, follow that source and correct the memory.
-4. Ask the user when a conflict cannot be resolved from authoritative workspace sources.
+4. Ask the user when a conflict cannot be resolved from the workspace.
 
-### Step 7: Maintain memory continuously
+### Step 6: Maintain memory continuously
 
 When workspace memory exists or the user approves its creation, you must update it immediately after every consequential step and before continuing to the next consequential action.
 
@@ -164,5 +153,5 @@ You must correct or supersede obsolete information, record decisions only after 
 When memory was created or materially changed, report:
 
 - The memory files created or updated.
-- Whether `.memory/` is private or committed.
+- Whether `.memory/` is private or repository-shared.
 - Any unresolved conflict, stale entry, or Git-tracking limitation.
