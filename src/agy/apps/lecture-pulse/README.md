@@ -51,13 +51,13 @@ Run these commands from the `src/agy/apps/lecture-pulse/` directory.
    mkdir lecture-pulse-work-1
    ```
 
-2. Seed the workspace with the baseline `AGENTS.md`, rules, and skills:
+2. Seed the workspace with the baseline `AGENTS.md`, rules, skills, and reusable SDLC subagents:
 
    ```bash
    ../../../scripts/seed-workspace.sh lecture-pulse-work-1
    ```
 
-   The seed script does not overwrite existing files or create workspace memory.
+   The seed script installs subagent definitions under `.agents/agents/`, does not overwrite existing files, and does not create workspace memory.
 
 3. If the exercise requires Google Agents CLI workflows, import its skills:
 
