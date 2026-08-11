@@ -51,10 +51,9 @@ If additional environment details required for the current task remain unknown, 
 2. Use the available skills identified by the base workspace workflow, including workspace-local skills and installed or bundled skills exposed by the agent host.
 3. Match each skill's name, description, and exposed applicability guidance to the user request, project configuration, and required toolchains.
 4. Apply every matching skill for the part of the task it governs. You must not select only one skill when multiple skills apply.
-5. If the task requires Python, you must apply the `python-environment-initialization` skill before executing Python, creating or changing a virtual environment, or installing Python packages or tools.
-6. Each applicable skill governs the toolchain-specific work described by its instructions. You must not repeat equivalent generic steps in this rule. Reuse its findings and approvals for the same action and scope, and include its required report in the consolidated report in Step 8 instead of reporting it separately.
-7. If applicable skills overlap, limit each skill to the work it governs. If their instructions conflict and the applicable instruction hierarchy does not resolve the conflict, stop and ask the user.
-8. If the task or applicable instructions require a specific environment or toolchain skill and that skill is unavailable, explain the limitation and ask the user how to proceed.
+5. Each applicable skill governs the toolchain-specific work described by its instructions. You must not repeat equivalent generic steps in this rule. Reuse its findings and approvals for the same action and scope, and include its required report in the consolidated report in Step 8 instead of reporting it separately.
+6. If applicable skills overlap, limit each skill to the work it governs. If their instructions conflict and the applicable instruction hierarchy does not resolve the conflict, stop and ask the user.
+7. If the task or applicable instructions require a specific environment or toolchain skill and that skill is unavailable, explain the limitation and ask the user how to proceed.
 
 A host-provided tool or integration is not a skill unless the host exposes skill instructions for it. Identify such capabilities as task-required tools in Step 5 and apply any separate matching skill when available.
 
