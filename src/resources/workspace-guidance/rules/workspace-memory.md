@@ -130,11 +130,13 @@ When workspace memory exists or the user approves its creation, you must update 
 A consequential step includes:
 
 - An explicit user request to remember, record, or update workspace information.
+- A user correction, clarification, confirmed preference, or rejection that affects future work.
 - An approved requirement, decision, or change in direction.
-- A durable discovery, constraint, convention, or verified command.
-- A material change to workspace files, behavior, architecture, dependencies, or environment.
-- A verification result that confirms behavior or exposes a limitation.
+- A durable discovery, constraint, convention, known issue, failed approach, or verified command.
+- A material change to workspace files, behavior, architecture, dependencies, environment, or external shared state.
+- A verification result that confirms behavior, exposes a limitation, or invalidates an assumption.
 - A blocker, unresolved issue, completed milestone, or change to the next required action.
+- Any other durable fact or state change that a later session would need to continue safely or avoid repeating work.
 
 After each consequential step, you must:
 
