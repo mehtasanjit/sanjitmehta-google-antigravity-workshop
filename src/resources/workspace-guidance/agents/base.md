@@ -9,9 +9,9 @@ These guidelines define the mandatory baseline behavior for an agent working in 
 - You must follow all applicable platform and workspace instructions.
 - You must treat the user's explicit request as the authority for the task's intended outcome and scope.
 - You must treat approved requirements, specifications, and recorded design decisions as authoritative for product behavior.
-- You must apply the relevant guidance under `.agents/rules/` and `.agents/skills/` within the approved scope.
+- You must apply the relevant guidance under `<workspace-root>/.agents/rules/` and `<workspace-root>/.agents/skills/` within the approved scope.
 - You must not allow workflow frameworks or technical skills to introduce requirements or expand the task beyond the approved specification.
-- If applicable instructions conflict or leave a material decision unresolved, you must stop and ask the user before proceeding.
+- If the applicable instruction hierarchy does not resolve a material conflict, you must stop and ask the user before proceeding.
 
 ## Communication
 
@@ -29,7 +29,7 @@ You must follow this sequence in proportion to the size and risk of the task:
 2. Inspect the existing project and relevant documentation.
 3. Propose and confirm significant design decisions.
 4. Create or update an implementation plan when the work requires one.
-5. Implement only the approved changes.
+5. Implement only the requested or approved changes.
 6. Verify the completed behavior using the applicable project guidance.
 7. Update relevant documentation.
 8. Hand off the result with evidence and any remaining limitations.
@@ -56,7 +56,9 @@ You must not begin implementation while an essential requirement or significant 
 
 ## Rules and Skills
 
-Rules are stored in `.agents/rules/`. Skills are stored in `.agents/skills/`.
+In a Git repository, `<workspace-root>` is the repository root. Otherwise, it is the workspace directory selected for the task.
+
+Rules are stored in `<workspace-root>/.agents/rules/`. Skills are stored in `<workspace-root>/.agents/skills/`.
 
 The IDE may not enforce rule activation. You must enforce it from the rule files.
 
@@ -69,7 +71,7 @@ Every new or updated rule must contain:
 
 Before starting task work, you must:
 
-1. List the available rules and skills.
+1. Identify the available rules and skills.
 2. Inspect each rule file. Read its `Rule Metadata` and `Applicability` sections when present.
 3. Apply rule modes as follows:
    - `Always On`: Read and apply the complete rule.
@@ -80,13 +82,14 @@ Before starting task work, you must:
 5. Treat a skill as applicable when the user explicitly invokes it or its description matches the task being performed.
 6. Read every applicable rule and skill completely before acting.
 7. You must use every applicable skill for the parts of the task it governs. Merely reading a skill does not satisfy this requirement.
-8. Load supporting references only when needed.
 
 If a rule lacks the required metadata or applicability information, you must inspect the complete rule to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply unrelated guidance.
 
+If a skill lacks `name` or `description` frontmatter, you must inspect the complete `SKILL.md` to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply an unrelated skill.
+
 ## Workspace Memory
 
-You must apply the complete `workspace-memory` rule in `.agents/rules/workspace-memory.md` to every workspace task.
+You must apply the complete `workspace-memory` rule in `<workspace-root>/.agents/rules/workspace-memory.md` to every workspace task.
 
 You must follow its discovery or initialization workflow before starting task work.
 
@@ -106,4 +109,4 @@ When workspace memory exists or its creation is approved, you must complete the 
 - You must report exactly which checks were performed and their results.
 - You must not claim that unexecuted checks passed or that unverified behavior works.
 - You must clearly identify anything incomplete, blocked, skipped, assumed, or unverified.
-- You must summarize the files changed, important decisions, verification evidence, and remaining risks at handoff.
+- When applicable, you must summarize the files changed, important decisions, verification evidence, and remaining risks at handoff.
