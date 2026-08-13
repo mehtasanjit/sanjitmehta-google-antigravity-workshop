@@ -2,16 +2,19 @@
 
 ## Purpose
 
-This repository supports a hands-on workshop for designing, developing, and integrating AI agents using Google Antigravity, Google Agent Development Kit (ADK), Gemini Enterprise, and the Model Context Protocol (MCP).
+This repository supports hands-on workshops for using Google Antigravity to carry out structured software and AI-agent development—from requirements discovery and workspace initialization through design, implementation, verification, evaluation, and deployment.
 
-It brings together:
+It includes projects built with Google Agent Development Kit (ADK) and examples that integrate Gemini Enterprise with external systems through the Model Context Protocol (MCP).
 
-- Requirements and prepared Antigravity workspaces for agent and application projects.
-- Reusable skills, plugins, rules, and software-development subagents.
+The repository brings together:
+
+- Requirements and prepared or seedable Antigravity workspaces for application and AI-agent projects.
+- Reusable `AGENTS.md` guidance, rules, skills, plugins, and software-development subagents.
+- Workshop projects for practicing specification-driven development, implementation, review, testing, and deployment.
 - Runnable examples demonstrating MCP integrations and secure, on-behalf-of access to external systems.
-- Supporting documentation for taking an agent from initial requirements through implementation, evaluation, and deployment.
+- Curated documentation and learning paths for progressing from foundational Antigravity usage to advanced agentic software-engineering workflows.
 
-The repository is intended for learning and experimentation. Its examples demonstrate development patterns and integration concepts and should be reviewed and hardened before production use.
+The repository is intended for learning and experimentation. Its examples demonstrate development patterns and integration concepts and must be reviewed, secured, and hardened before production use.
 
 ## Recommended Google Antigravity Codelab Learning Path
 
