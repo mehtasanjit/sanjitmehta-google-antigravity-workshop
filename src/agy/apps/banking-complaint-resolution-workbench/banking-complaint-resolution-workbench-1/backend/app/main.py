@@ -1,3 +1,4 @@
+import datetime
 from fastapi import FastAPI, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -20,10 +21,71 @@ class ComplaintCreate(BaseModel):
     disputed_amount: float = 0.0
     priority: str = "Medium"  # "Low", "Medium", "High", "Critical"
 
+class CommentCreate(BaseModel):
+    comment: str
+
+class ProposalCreate(BaseModel):
+    resolution_notes: str
+
+class RejectionCreate(BaseModel):
+    feedback: str
+
+def format_complaint(c: Complaint):
+    """Helper to format a SQLAlchemy Complaint instance into a standard dictionary."""
+    return {
+        "id": c.id,
+        "customer_name": c.customer_name,
+        "account_number": c.account_number,
+        "customer_email": c.customer_email,
+        "customer_phone": c.customer_phone,
+        "title": c.title,
+        "description": c.description,
+        "category": c.category,
+        "subcategory": c.subcategory,
+        "disputed_amount": c.disputed_amount,
+        "priority": c.priority,
+        "status": c.status,
+        "sla_deadline": c.sla_deadline,
+        "assigned_to": c.assigned_to,
+        "logged_by": c.logged_by,
+        "resolution_notes": c.resolution_notes,
+        "supervisor_feedback": c.supervisor_feedback,
+        "created_at": c.created_at,
+        "updated_at": c.updated_at
+    }
+
 # Initialize database on startup if running as main server
 @app.on_event("startup")
 def startup_event():
     init_db()
+
+@app.get("/api/dashboard/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """Retrieve real-time summary counts for the dashboard metric widgets."""
+    now = datetime.datetime.utcnow()
+    one_day_from_now = now + datetime.timedelta(days=1)
+    
+    # Active Cases: Registered, Under Investigation, Needs Revision
+    active_count = db.query(Complaint).filter(Complaint.status.in_(["Registered", "Under Investigation", "Needs Revision"])).count()
+    
+    # Pending Approval: Resolution Proposed
+    pending_count = db.query(Complaint).filter(Complaint.status == "Resolution Proposed").count()
+    
+    # SLA Critical: Active cases with SLA deadline less than 24 hours away
+    sla_critical_count = db.query(Complaint).filter(
+        Complaint.status.in_(["Registered", "Under Investigation", "Needs Revision"]),
+        Complaint.sla_deadline <= one_day_from_now
+    ).count()
+    
+    # Resolved Cases: Resolved
+    resolved_count = db.query(Complaint).filter(Complaint.status == "Resolved").count()
+    
+    return {
+        "active_cases": active_count,
+        "pending_approval": pending_count,
+        "sla_critical": sla_critical_count,
+        "resolved_cases": resolved_count
+    }
 
 @app.get("/api/complaints")
 def get_complaints(
@@ -40,30 +102,7 @@ def get_complaints(
     
     complaints = query.all()
     
-    return [
-        {
-            "id": c.id,
-            "customer_name": c.customer_name,
-            "account_number": c.account_number,
-            "customer_email": c.customer_email,
-            "customer_phone": c.customer_phone,
-            "title": c.title,
-            "description": c.description,
-            "category": c.category,
-            "subcategory": c.subcategory,
-            "disputed_amount": c.disputed_amount,
-            "priority": c.priority,
-            "status": c.status,
-            "sla_deadline": c.sla_deadline,
-            "assigned_to": c.assigned_to,
-            "logged_by": c.logged_by,
-            "resolution_notes": c.resolution_notes,
-            "supervisor_feedback": c.supervisor_feedback,
-            "created_at": c.created_at,
-            "updated_at": c.updated_at
-        }
-        for c in complaints
-    ]
+    return [format_complaint(c) for c in complaints]
 
 @app.get("/api/complaints/{complaint_id}")
 def get_complaint_details(complaint_id: str, db: Session = Depends(get_db)):
@@ -75,38 +114,19 @@ def get_complaint_details(complaint_id: str, db: Session = Depends(get_db)):
     # Query all audit logs for this complaint in ascending (chronological) order
     audit_logs = db.query(AuditLog).filter(AuditLog.complaint_id == complaint_id).order_by(AuditLog.timestamp.asc()).all()
     
-    return {
-        "id": complaint.id,
-        "customer_name": complaint.customer_name,
-        "account_number": complaint.account_number,
-        "customer_email": complaint.customer_email,
-        "customer_phone": complaint.customer_phone,
-        "title": complaint.title,
-        "description": complaint.description,
-        "category": complaint.category,
-        "subcategory": complaint.subcategory,
-        "disputed_amount": complaint.disputed_amount,
-        "priority": complaint.priority,
-        "status": complaint.status,
-        "sla_deadline": complaint.sla_deadline,
-        "assigned_to": complaint.assigned_to,
-        "logged_by": complaint.logged_by,
-        "resolution_notes": complaint.resolution_notes,
-        "supervisor_feedback": complaint.supervisor_feedback,
-        "created_at": complaint.created_at,
-        "updated_at": complaint.updated_at,
-        "audit_logs": [
-            {
-                "id": log.id,
-                "timestamp": log.timestamp,
-                "user_name": log.user_name,
-                "user_role": log.user_role,
-                "event_type": log.event_type,
-                "description": log.description
-            }
-            for log in audit_logs
-        ]
-    }
+    details = format_complaint(complaint)
+    details["audit_logs"] = [
+        {
+            "id": log.id,
+            "timestamp": log.timestamp,
+            "user_name": log.user_name,
+            "user_role": log.user_role,
+            "event_type": log.event_type,
+            "description": log.description
+        }
+        for log in audit_logs
+    ]
+    return details
 
 @app.post("/api/complaints", status_code=201)
 def create_complaint(
@@ -116,7 +136,6 @@ def create_complaint(
     db: Session = Depends(get_db)
 ):
     """Log a new customer complaint, generate a unique sequential ID, calculate SLA, and log audit event."""
-    # 1. Generate unique sequential ID: CRW-2026-XXXX
     latest_complaint = db.query(Complaint).order_by(Complaint.id.desc()).first()
     if latest_complaint:
         try:
@@ -130,10 +149,8 @@ def create_complaint(
         
     complaint_id = f"CRW-2026-{new_num:04d}"
     
-    # 2. Calculate SLA deadline
     sla_deadline = calculate_sla(payload.priority)
     
-    # 3. Create Complaint
     new_case = Complaint(
         id=complaint_id,
         customer_name=payload.customer_name,
@@ -154,7 +171,7 @@ def create_complaint(
     db.commit()
     db.refresh(new_case)
     
-    # 4. Write 'Log Complaint' Audit Event
+    # Write Audit Event
     user_obj = db.query(User).filter(User.username == x_user_name).first()
     actor_name = user_obj.name if user_obj else (x_user_name if x_user_name else "System")
     actor_role = user_obj.role if user_obj else (x_user_role if x_user_role else "System")
@@ -169,24 +186,178 @@ def create_complaint(
     db.add(audit_log)
     db.commit()
     
-    return {
-        "id": new_case.id,
-        "customer_name": new_case.customer_name,
-        "account_number": new_case.account_number,
-        "customer_email": new_case.customer_email,
-        "customer_phone": new_case.customer_phone,
-        "title": new_case.title,
-        "description": new_case.description,
-        "category": new_case.category,
-        "subcategory": new_case.subcategory,
-        "disputed_amount": new_case.disputed_amount,
-        "priority": new_case.priority,
-        "status": new_case.status,
-        "sla_deadline": new_case.sla_deadline,
-        "assigned_to": new_case.assigned_to,
-        "logged_by": new_case.logged_by,
-        "resolution_notes": new_case.resolution_notes,
-        "supervisor_feedback": new_case.supervisor_feedback,
-        "created_at": new_case.created_at,
-        "updated_at": new_case.updated_at
-    }
+    return format_complaint(new_case)
+
+@app.post("/api/complaints/{complaint_id}/claim")
+def claim_complaint(
+    complaint_id: str,
+    x_user_name: Optional[str] = Header(None, alias="X-User-Name"),
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+    db: Session = Depends(get_db)
+):
+    """Claim/assign a case to the active case handler, transitioning status to 'Under Investigation'."""
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+        
+    complaint.status = "Under Investigation"
+    complaint.assigned_to = x_user_name
+    db.commit()
+    db.refresh(complaint)
+    
+    # Write Audit Log
+    user_obj = db.query(User).filter(User.username == x_user_name).first()
+    actor_name = user_obj.name if user_obj else (x_user_name if x_user_name else "System")
+    actor_role = user_obj.role if user_obj else (x_user_role if x_user_role else "System")
+    
+    audit_log = AuditLog(
+        complaint_id=complaint_id,
+        user_name=actor_name,
+        user_role=actor_role,
+        event_type="Claim Case",
+        description=f"Case claimed by {actor_name} ({actor_role}). Status changed to Under Investigation."
+    )
+    db.add(audit_log)
+    db.commit()
+    
+    return format_complaint(complaint)
+
+@app.post("/api/complaints/{complaint_id}/comment")
+def add_complaint_comment(
+    complaint_id: str,
+    payload: CommentCreate,
+    x_user_name: Optional[str] = Header(None, alias="X-User-Name"),
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+    db: Session = Depends(get_db)
+):
+    """Append a custom user comment directly to the complaint's audit log timeline."""
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+        
+    user_obj = db.query(User).filter(User.username == x_user_name).first()
+    actor_name = user_obj.name if user_obj else (x_user_name if x_user_name else "System")
+    actor_role = user_obj.role if user_obj else (x_user_role if x_user_role else "System")
+    
+    audit_log = AuditLog(
+        complaint_id=complaint_id,
+        user_name=actor_name,
+        user_role=actor_role,
+        event_type="Add Comment",
+        description=f"Comment added by {actor_name} ({actor_role}): {payload.comment}"
+    )
+    db.add(audit_log)
+    db.commit()
+    
+    return {"status": "success", "detail": "Comment added successfully"}
+
+@app.post("/api/complaints/{complaint_id}/propose")
+def propose_resolution(
+    complaint_id: str,
+    payload: ProposalCreate,
+    x_user_name: Optional[str] = Header(None, alias="X-User-Name"),
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+    db: Session = Depends(get_db)
+):
+    """Submit proposed resolution notes, transitioning status to 'Resolution Proposed'."""
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+        
+    complaint.status = "Resolution Proposed"
+    complaint.resolution_notes = payload.resolution_notes
+    db.commit()
+    db.refresh(complaint)
+    
+    # Write Audit Log
+    user_obj = db.query(User).filter(User.username == x_user_name).first()
+    actor_name = user_obj.name if user_obj else (x_user_name if x_user_name else "System")
+    actor_role = user_obj.role if user_obj else (x_user_role if x_user_role else "System")
+    
+    audit_log = AuditLog(
+        complaint_id=complaint_id,
+        user_name=actor_name,
+        user_role=actor_role,
+        event_type="Submit Proposal",
+        description=f"Resolution proposed by {actor_name} ({actor_role}). Notes: {payload.resolution_notes}"
+    )
+    db.add(audit_log)
+    db.commit()
+    
+    return format_complaint(complaint)
+
+@app.post("/api/complaints/{complaint_id}/approve")
+def approve_resolution(
+    complaint_id: str,
+    x_user_name: Optional[str] = Header(None, alias="X-User-Name"),
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+    db: Session = Depends(get_db)
+):
+    """Supervisor approves the resolution, transitioning status to 'Resolved' (RBAC Checked)."""
+    # Role check: only supervisors can approve resolutions
+    if x_user_role != "Supervisor":
+        raise HTTPException(status_code=403, detail="Only supervisors can approve resolutions")
+        
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+        
+    complaint.status = "Resolved"
+    db.commit()
+    db.refresh(complaint)
+    
+    # Write Audit Log
+    user_obj = db.query(User).filter(User.username == x_user_name).first()
+    actor_name = user_obj.name if user_obj else (x_user_name if x_user_name else "System")
+    actor_role = user_obj.role if user_obj else (x_user_role if x_user_role else "System")
+    
+    audit_log = AuditLog(
+        complaint_id=complaint_id,
+        user_name=actor_name,
+        user_role=actor_role,
+        event_type="Approve Case",
+        description=f"Resolution approved and case closed by {actor_name} ({actor_role})."
+    )
+    db.add(audit_log)
+    db.commit()
+    
+    return format_complaint(complaint)
+
+@app.post("/api/complaints/{complaint_id}/reject")
+def reject_resolution(
+    complaint_id: str,
+    payload: RejectionCreate,
+    x_user_name: Optional[str] = Header(None, alias="X-User-Name"),
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+    db: Session = Depends(get_db)
+):
+    """Supervisor rejects the resolution, transitioning status to 'Needs Revision' (RBAC Checked)."""
+    # Role check: only supervisors can reject resolutions
+    if x_user_role != "Supervisor":
+        raise HTTPException(status_code=403, detail="Only supervisors can reject resolutions")
+        
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+        
+    complaint.status = "Needs Revision"
+    complaint.supervisor_feedback = payload.feedback
+    db.commit()
+    db.refresh(complaint)
+    
+    # Write Audit Log
+    user_obj = db.query(User).filter(User.username == x_user_name).first()
+    actor_name = user_obj.name if user_obj else (x_user_name if x_user_name else "System")
+    actor_role = user_obj.role if user_obj else (x_user_role if x_user_role else "System")
+    
+    audit_log = AuditLog(
+        complaint_id=complaint_id,
+        user_name=actor_name,
+        user_role=actor_role,
+        event_type="Reject Case",
+        description=f"Resolution rejected by {actor_name} ({actor_role}). Feedback: {payload.feedback}"
+    )
+    db.add(audit_log)
+    db.commit()
+    
+    return format_complaint(complaint)
