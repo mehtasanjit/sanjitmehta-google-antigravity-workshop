@@ -2,7 +2,7 @@
 
 ## Phase 1: Database Setup & Mock Data (TDD)
 - [x] Task 1.1: Define SQLAlchemy models for Complaints, Audit Logs, and Users. (ec71215)
-- [ ] Task 1.2: Implement SQLite database initialization and populate with robust mock data (Jane Doe, John Smith, Alice Johnson, Robert Vance).
+- [x] Task 1.2: Implement SQLite database initialization and populate with robust mock data (Jane Doe, John Smith, Alice Johnson, Robert Vance). (3651160)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: FastAPI Backend REST Endpoints (TDD)
