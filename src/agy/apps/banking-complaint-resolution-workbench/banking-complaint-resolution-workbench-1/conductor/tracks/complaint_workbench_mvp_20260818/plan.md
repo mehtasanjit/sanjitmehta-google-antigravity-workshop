@@ -1,7 +1,7 @@
 # Implementation Plan: Banking Complaint Resolution Workbench MVP
 
 ## Phase 1: Database Setup & Mock Data (TDD)
-- [ ] Task 1.1: Define SQLAlchemy models for Complaints, Audit Logs, and Users.
+- [x] Task 1.1: Define SQLAlchemy models for Complaints, Audit Logs, and Users. (ec71215)
 - [ ] Task 1.2: Implement SQLite database initialization and populate with robust mock data (Jane Doe, John Smith, Alice Johnson, Robert Vance).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
