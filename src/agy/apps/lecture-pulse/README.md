@@ -11,47 +11,60 @@ lecture-pulse/
 ├── README.md
 ├── docs/
 │   └── requirements.md
-├── lecture-pulse-work/
-│   ├── .agents/
-│   │   ├── plugins/
-│   │   ├── rules/
-│   │   └── skills/
-│   └── AGENTS.md
-└── lecture-pulse-demo/       # Completed reference implementation, when available
+└── lecture-pulse-demo/
+    ├── .agents/
+    │   ├── agents/
+    │   ├── plugins/
+    │   │   └── conductor/
+    │   ├── rules/
+    │   └── skills/
+    └── AGENTS.md
 ```
 
 ### `docs/`
 
 Contains the product requirements that define the problem, intended users, required experience, initial scope, and success criteria. These requirements are the authoritative starting point for the workshop exercise.
 
-### `lecture-pulse-work/`
-
-The prepared participant workspace. It contains:
-
-- Instructions for agents working on the project.
-- Google Agents CLI skills for agent development workflows.
-- The Conductor plugin for specification-driven planning and implementation.
-- Project-specific rules requiring applicable skills and current official documentation to be consulted before implementation.
-
-Participants use this directory to create the project specification, make design decisions, develop the application, and record verification results.
-
 ### `lecture-pulse-demo/`
 
-The intended location for a completed, runnable reference implementation. The demo should remain separate from the participant workspace so that workshop users can attempt the exercise before reviewing a finished solution.
+The prepared Antigravity workspace for the workshop. It contains:
 
-The reference implementation has not yet been added to this repository.
+- The baseline `AGENTS.md` and workspace rules.
+- Reusable software-development subagents under `.agents/agents/`.
+- Baseline workspace skills and Google Agents CLI skills under `.agents/skills/`.
+- A workspace-local installation of the Conductor plugin under `.agents/plugins/conductor/`.
 
-## Set up a new workspace
+The directory contains the development setup, not a completed Lecture Pulse application. Copy it before starting so that the prepared workspace remains unchanged and can be reused by other participants.
+
+## Use the prepared workspace
 
 Run these commands from the `src/agy/apps/lecture-pulse/` directory.
 
-1. Create a new participant workspace. Use a distinct name so the prepared workspace remains unchanged:
+1. Copy the prepared workspace using a distinct name:
 
    ```bash
-   mkdir lecture-pulse-work-1
+   cp -R lecture-pulse-demo lecture-pulse-work-1
    ```
 
-2. Seed the workspace with the baseline `AGENTS.md`, rules, skills, and reusable SDLC subagents:
+2. Open `lecture-pulse-work-1/` as the workspace and read its `AGENTS.md` before starting the exercise. No additional workspace seeding or Conductor import is required.
+
+## Develop Lecture Pulse with Conductor
+
+Lecture Pulse can be developed using Conductor's specification-driven workflow. In the copied workspace:
+
+1. Read [`docs/requirements.md`](docs/requirements.md) in this project directory.
+2. Run `/conductor:conductor-setup` to establish the product, technology, and workflow context.
+3. Run `/conductor:conductor-new-track` and use the requirements to define and review the application specification and implementation plan.
+4. After approving the specification and plan, run `/conductor:conductor-implement`.
+5. Verify the completed behavior against the requirements. Use `/conductor:conductor-review` when a structured review is useful.
+
+Conductor is already stored locally in `lecture-pulse-demo/.agents/plugins/conductor/`, so it is carried into the copied workspace.
+
+## Initialize a workspace from scratch
+
+As an alternative to copying `lecture-pulse-demo/`, create a workspace from the repository's reusable resources:
+
+1. Seed the workspace with the baseline `AGENTS.md`, rules, skills, and reusable SDLC subagents:
 
    ```bash
    ../../../scripts/seed-workspace.sh lecture-pulse-work-1
@@ -59,30 +72,31 @@ Run these commands from the `src/agy/apps/lecture-pulse/` directory.
 
    The seed script installs subagent definitions under `.agents/agents/`, does not overwrite existing files, and does not create workspace memory.
 
-3. If the exercise requires Google Agents CLI workflows, import its skills:
+2. Follow the official installation methods first when optional tooling is required:
+
+   ```bash
+   uvx google-agents-cli setup
+   agy plugins install https://github.com/gemini-cli-extensions/conductor
+   ```
+
+3. If the standard installations are unavailable, or workspace-local copies are required, use the repository import scripts:
 
    ```bash
    python3 ../../../scripts/import_google_agents_cli_skills.py lecture-pulse-work-1
-   ```
-
-4. If the exercise requires specification-driven development with Conductor, import the plugin:
-
-   ```bash
    python3 ../../../scripts/import_conductor_plugin.py lecture-pulse-work-1
    ```
 
    The import commands download content from the official upstream repositories and require network access. Use `--dry-run` to download and validate the content without changing the workspace. Existing installations are not replaced unless `--force` is supplied.
 
-5. Open `lecture-pulse-work-1/` as the workspace and read its `AGENTS.md` before starting the exercise.
+4. Open `lecture-pulse-work-1/` as the workspace and read its `AGENTS.md` before starting the exercise.
 
 ## Workshop flow
 
 1. Read [`docs/requirements.md`](docs/requirements.md).
-2. Open either the prepared [`lecture-pulse-work`](lecture-pulse-work/) workspace or the new participant workspace you created.
-3. Read the selected workspace's `AGENTS.md` before starting work.
-4. Use the applicable installed skills and, when installed, the Conductor workflow to clarify requirements, agree on the design, plan the work, and implement the application.
+2. Copy [`lecture-pulse-demo/`](lecture-pulse-demo/) to a new participant workspace and open the copy.
+3. Read the copied workspace's `AGENTS.md` before starting work.
+4. Use Conductor to clarify requirements, agree on the design, plan the work, and implement the application.
 5. Verify the completed behavior against the requirements and record anything incomplete or unverified.
-6. Compare the result with `lecture-pulse-demo/` when the reference implementation becomes available.
 
 ## Initial scope
 
@@ -99,4 +113,4 @@ Attendance, grading, assessments, student-performance tracking, and learning-man
 
 ## Status
 
-The requirements and Antigravity participant workspace are prepared. Application implementation and the completed reference demo are not currently included.
+The requirements and prepared Antigravity workspace are available. The workspace includes the baseline guidance, reusable SDLC subagents, Google Agents CLI skills, and Conductor. The application implementation is intentionally left to workshop participants.

@@ -22,8 +22,8 @@ The repository is organized into five main areas:
 
 | Area | Purpose |
 |---|---|
-| [`src/agy/agents/`](src/agy/agents/) | AI-agent workshop exercises, requirements, prompts, and prepared Antigravity workspaces. |
-| [`src/agy/apps/`](src/agy/apps/) | Application-development workshops, including the Lecture Pulse project. |
+| [`src/agy/agents/`](src/agy/agents/) | Agent-development workshops, requirements, prompts, and prepared Antigravity workspaces. |
+| [`src/agy/apps/`](src/agy/apps/) | Greenfield and brownfield application-development workshops. |
 | [`src/geap/`](src/geap/) | Runnable Gemini Enterprise, ADK, MCP, authentication, and external-system integration examples. |
 | [`src/resources/`](src/resources/) | Reusable `AGENTS.md` guidance, rules, skills, plugins, and software-development subagents for initializing workspaces. |
 | [`src/scripts/`](src/scripts/) | Scripts for seeding workspaces and importing supported skills and plugins. |
@@ -33,6 +33,52 @@ These areas support three related workshop activities:
 1. Define and build applications and AI agents in structured Antigravity workspaces.
 2. Practice reusable agentic software-development workflows using rules, skills, plugins, and subagents.
 3. Integrate agents with external systems through MCP and secure, identity-aware access patterns.
+
+## Start a Workshop Workspace
+
+The following paths are common starting points, not fixed prescriptions. A workshop can use material from either or both areas:
+
+- Use [`src/agy/apps/`](src/agy/apps/) for greenfield and brownfield application development.
+- Use [`src/agy/agents/`](src/agy/agents/) for agent development.
+
+Each project contains its requirements and supporting workshop material. Directories whose names end in `-demo` contain pre-created Antigravity workspaces. Copy the relevant `-demo` directory to a new working directory, open the copy as your workspace, and read its `AGENTS.md` before starting. Keeping the original unchanged makes it easy to repeat the workshop or create a workspace for another participant.
+
+For example, from the repository root:
+
+```bash
+cp -R src/agy/apps/<project>/<project>-demo <your-workspace>
+```
+
+Alternatively, initialize a new workspace from the repository's reusable resources:
+
+```bash
+./src/scripts/seed-workspace.sh <your-workspace>
+```
+
+The seed script adds the baseline `AGENTS.md`, rules, skills, and reusable software-development subagents. It does not overwrite existing destination files.
+
+### Install optional development tooling
+
+For agent-development exercises, first follow the official [Google Agents CLI getting-started guide](https://google.github.io/agents-cli/guide/getting-started/). Its recommended setup command installs the CLI and its context-aware skills:
+
+```bash
+uvx google-agents-cli setup
+```
+
+For specification-driven development, first install the official [Conductor plugin](https://github.com/gemini-cli-extensions/conductor) through Antigravity:
+
+```bash
+agy plugins install https://github.com/gemini-cli-extensions/conductor
+```
+
+If either standard installation is unavailable, use the repository's import scripts as workspace-local fallbacks. The Conductor importer is also useful when Conductor must be stored locally in the workspace, while the Google Agents CLI importer is useful when only its skills—not the CLI itself—are needed:
+
+```bash
+python3 src/scripts/import_conductor_plugin.py <your-workspace>
+python3 src/scripts/import_google_agents_cli_skills.py <your-workspace>
+```
+
+The import scripts download content from the official upstream repositories and therefore require network access. Use `--dry-run` to download and validate an import without changing the workspace; existing installations are replaced only when `--force` is supplied.
 
 ## Recommended Google Antigravity Codelab Learning Path
 
