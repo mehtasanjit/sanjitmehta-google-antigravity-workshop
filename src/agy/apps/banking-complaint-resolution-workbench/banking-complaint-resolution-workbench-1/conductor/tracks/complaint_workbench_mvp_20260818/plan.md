@@ -14,9 +14,9 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (0726a1f)
 
 ## Phase 3: Frontend Layout & Dashboard UI
-- [ ] Task 3.1: Scaffold React application with persistent Header, Sidebar, and Header Role Switcher Context.
-- [ ] Task 3.2: Implement Dashboard View featuring summary cards and searchable/filterable complaint table.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 3.1: Scaffold React application with persistent Header, Sidebar, and Header Role Switcher Context. (0529ccc)
+- [x] Task 3.2: Implement Dashboard View featuring summary cards and searchable/filterable complaint table. (0529ccc)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (0529ccc)
 
 ## Phase 4: Case Investigation & Audit Timeline UI
 - [ ] Task 4.1: Implement Case Detail split-screen master-detail layout.
