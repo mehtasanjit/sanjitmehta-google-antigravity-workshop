@@ -104,3 +104,41 @@ def test_get_complaint_not_found(client):
     response = client.get("/api/complaints/CRW-INVALID-999")
     assert response.status_code == 404
     assert response.json()["detail"] == "Complaint not found"
+
+def test_create_complaint_endpoint(client):
+    """Verify POST /api/complaints successfully logs a complaint and writes audit log."""
+    new_complaint = {
+        "customer_name": "Julius Caesar",
+        "account_number": "ACT-11111-22",
+        "customer_email": "julius@rome.gov",
+        "customer_phone": "+1-555-4444",
+        "title": "Unauthorised Senate Expense Posting",
+        "description": "Unexplained debit of $500 for robes posting to debit card.",
+        "category": "Credit Cards",
+        "subcategory": "Unauthorised Charge",
+        "disputed_amount": 500.0,
+        "priority": "Critical"
+    }
+    
+    response = client.post(
+        "/api/complaints",
+        json=new_complaint,
+        headers={"X-User-Name": "jane_doe", "X-User-Role": "CSR"}
+    )
+    
+    assert response.status_code == 201
+    data = response.json()
+    assert data["id"].startswith("CRW-")
+    assert data["customer_name"] == "Julius Caesar"
+    assert data["priority"] == "Critical"
+    assert data["status"] == "Registered"
+    assert data["logged_by"] == "jane_doe"
+    assert data["sla_deadline"] is not None
+    
+    # Verify audit log was written by calling details endpoint
+    details_response = client.get(f"/api/complaints/{data['id']}")
+    assert details_response.status_code == 200
+    details_data = details_response.json()
+    assert len(details_data["audit_logs"]) == 1
+    assert details_data["audit_logs"][0]["event_type"] == "Log Complaint"
+    assert details_data["audit_logs"][0]["user_name"] == "Jane Doe"
