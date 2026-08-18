@@ -1,0 +1,5 @@
+{
+  "policyPaths": [
+    "./.gemini/policies/policy.toml"
+  ]
+}
