@@ -1,9 +1,14 @@
-> [!IMPORTANT]
-> **Antigravity brownfield workshop:** This is the primary workshop copy cloned from the official [GoogleCloudPlatform/bank-of-anthos](https://github.com/GoogleCloudPlatform/bank-of-anthos) repository.
+# Bank of Anthos Antigravity Brownfield Workshop
+
+> **Base application:** This workspace contains a copy cloned from the official [GoogleCloudPlatform/bank-of-anthos](https://github.com/GoogleCloudPlatform/bank-of-anthos) repository.
 >
-> **Objective:** Use Google Antigravity and the prepared Conductor workflow to understand this existing multi-service application and add bounded features safely. The first exercise adds transaction search, credit/debit filtering, and CSV export to the existing frontend.
->
-> **Start here:** Copy [`bank-of-anthos-demo/`](bank-of-anthos-demo/) to a separate working directory, open the copy as the workspace, read its `AGENTS.md`, and submit the [feature prompt](docs/prompt_transaction-search-and-csv-export.md). Review the [feature requirements](docs/requirements_transaction-search-and-csv-export.md) when facilitating or validating the exercise. The prepared demo already includes the upstream application, SDLC subagents, Google Agents CLI skills, and a workspace-local Conductor plugin.
+> **Objective:** Use Google Antigravity and the installed Conductor workflow to understand this existing application and add bounded brownfield features safely. The first exercise is transaction search, credit/debit filtering, and CSV export; its requirements and starter prompt are in the parent workshop's `docs/` directory.
+
+This is a reusable prepared workspace, not a completed feature implementation. Copy the directory before beginning. The workspace already includes `AGENTS.md`, reusable SDLC subagents, Google Agents CLI skills, and a local Conductor plugin under `.agents/`.
+
+---
+
+## Upstream Bank of Anthos documentation
 
 # Bank of Anthos
 
