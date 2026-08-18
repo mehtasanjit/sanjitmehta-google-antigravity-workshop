@@ -219,3 +219,5 @@ __marimo__/
 
 .claude
 
+# Private workspace memory
+/.memory/

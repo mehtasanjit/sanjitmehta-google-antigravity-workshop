@@ -16,6 +16,24 @@ The repository brings together:
 
 The repository is intended for learning and experimentation. Its examples demonstrate development patterns and integration concepts and must be reviewed, secured, and hardened before production use.
 
+## Repository Overview
+
+The repository is organized into five main areas:
+
+| Area | Purpose |
+|---|---|
+| [`src/agy/agents/`](src/agy/agents/) | AI-agent workshop exercises, requirements, prompts, and prepared Antigravity workspaces. |
+| [`src/agy/apps/`](src/agy/apps/) | Application-development workshops, including the Lecture Pulse project. |
+| [`src/geap/`](src/geap/) | Runnable Gemini Enterprise, ADK, MCP, authentication, and external-system integration examples. |
+| [`src/resources/`](src/resources/) | Reusable `AGENTS.md` guidance, rules, skills, plugins, and software-development subagents for initializing workspaces. |
+| [`src/scripts/`](src/scripts/) | Scripts for seeding workspaces and importing supported skills and plugins. |
+
+These areas support three related workshop activities:
+
+1. Define and build applications and AI agents in structured Antigravity workspaces.
+2. Practice reusable agentic software-development workflows using rules, skills, plugins, and subagents.
+3. Integrate agents with external systems through MCP and secure, identity-aware access patterns.
+
 ## Recommended Google Antigravity Codelab Learning Path
 
 The following learning path orders the codelabs in the [Google Antigravity catalog](https://codelabs.developers.google.com/?product=antigravity) from foundational topics to more mature application, agent, platform, and enterprise workflows. This is a recommended progression, not a formal prerequisite chain.
