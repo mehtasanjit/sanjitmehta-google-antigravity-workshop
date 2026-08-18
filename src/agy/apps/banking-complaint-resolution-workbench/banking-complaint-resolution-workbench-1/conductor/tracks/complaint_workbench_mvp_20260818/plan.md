@@ -6,8 +6,8 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (63bf5ff)
 
 ## Phase 2: FastAPI Backend REST Endpoints (TDD)
-- [~] Task 2.1: Implement GET /api/complaints and GET /api/complaints/{id} endpoints.
-- [ ] Task 2.2: Implement POST /api/complaints with automatic SLA calculation based on priority.
+- [x] Task 2.1: Implement GET /api/complaints and GET /api/complaints/{id} endpoints. (e83f7ec)
+- [x] Task 2.2: Implement POST /api/complaints with automatic SLA calculation based on priority. (eb9bbf4)
 - [ ] Task 2.3: Implement POST /api/complaints/{id}/claim and POST /api/complaints/{id}/comment.
 - [ ] Task 2.4: Implement POST /api/complaints/{id}/propose, approve, and reject endpoints (incorporating Supervisor RBAC check).
 - [ ] Task 2.5: Implement GET /api/dashboard/stats for real-time dashboard indicators.
