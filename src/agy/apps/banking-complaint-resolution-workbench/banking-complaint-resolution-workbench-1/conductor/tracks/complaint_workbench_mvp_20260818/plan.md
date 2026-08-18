@@ -11,7 +11,7 @@
 - [x] Task 2.3: Implement POST /api/complaints/{id}/claim and POST /api/complaints/{id}/comment. (6cb738e)
 - [x] Task 2.4: Implement POST /api/complaints/{id}/propose, approve, and reject endpoints (incorporating Supervisor RBAC check). (6cb738e)
 - [x] Task 2.5: Implement GET /api/dashboard/stats for real-time dashboard indicators. (6cb738e)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (0726a1f)
 
 ## Phase 3: Frontend Layout & Dashboard UI
 - [ ] Task 3.1: Scaffold React application with persistent Header, Sidebar, and Header Role Switcher Context.
