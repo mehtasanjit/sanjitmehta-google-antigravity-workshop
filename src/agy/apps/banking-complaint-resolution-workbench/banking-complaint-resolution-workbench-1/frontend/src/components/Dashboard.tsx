@@ -95,6 +95,13 @@ const Dashboard: React.FC = () => {
   const [disputedAmount, setDisputedAmount] = useState<string>('0.00');
   const [priority, setPriority] = useState<string>('Medium');
 
+  // New Case Action States
+  const [commentText, setCommentText] = useState<string>('');
+  const [isProposalModalOpen, setIsProposalModalOpen] = useState<boolean>(false);
+  const [resolutionNotes, setResolutionNotes] = useState<string>('');
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
+  const [rejectionFeedback, setRejectionFeedback] = useState<string>('');
+
   // Trigger toast alert helper
   const showToast = (text: string, type: 'success' | 'error') => {
     setToast({ text, type });
@@ -242,6 +249,132 @@ const Dashboard: React.FC = () => {
       }
     } catch {
       showToast('Error posting to backend API', 'error');
+    }
+  };
+
+  // Claim Case API Call
+  const handleClaimCase = async () => {
+    if (!selectedComplaintId) return;
+    try {
+      const res = await fetchWithAuth(`/api/complaints/${selectedComplaintId}/claim`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        showToast('Case claimed successfully!', 'success');
+        await loadStats();
+        await loadComplaints();
+        await loadComplaintDetails(selectedComplaintId);
+      } else {
+        const errData = await res.json() as { detail?: string };
+        showToast(errData.detail || 'Failed to claim case', 'error');
+      }
+    } catch {
+      showToast('Error connecting to backend API', 'error');
+    }
+  };
+
+  // Add Comment API Call
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedComplaintId) return;
+    if (!commentText.trim()) {
+      showToast('Comment cannot be empty.', 'error');
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`/api/complaints/${selectedComplaintId}/comment`, {
+        method: 'POST',
+        body: JSON.stringify({ comment: commentText.trim() }),
+      });
+      if (res.ok) {
+        showToast('Comment added successfully!', 'success');
+        setCommentText('');
+        await loadComplaintDetails(selectedComplaintId);
+      } else {
+        const errData = await res.json() as { detail?: string };
+        showToast(errData.detail || 'Failed to add comment', 'error');
+      }
+    } catch {
+      showToast('Error connecting to backend API', 'error');
+    }
+  };
+
+  // Submit Proposal API Call
+  const handleProposeResolution = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedComplaintId) return;
+    if (!resolutionNotes.trim()) {
+      showToast('Resolution notes cannot be empty.', 'error');
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`/api/complaints/${selectedComplaintId}/propose`, {
+        method: 'POST',
+        body: JSON.stringify({ resolution_notes: resolutionNotes.trim() }),
+      });
+      if (res.ok) {
+        showToast('Resolution proposed successfully!', 'success');
+        setIsProposalModalOpen(false);
+        setResolutionNotes('');
+        await loadStats();
+        await loadComplaints();
+        await loadComplaintDetails(selectedComplaintId);
+      } else {
+        const errData = await res.json() as { detail?: string };
+        showToast(errData.detail || 'Failed to propose resolution', 'error');
+      }
+    } catch {
+      showToast('Error connecting to backend API', 'error');
+    }
+  };
+
+  // Approve Resolution API Call
+  const handleApproveResolution = async () => {
+    if (!selectedComplaintId) return;
+    try {
+      const res = await fetchWithAuth(`/api/complaints/${selectedComplaintId}/approve`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        showToast('Resolution approved and case closed successfully!', 'success');
+        await loadStats();
+        await loadComplaints();
+        await loadComplaintDetails(selectedComplaintId);
+      } else {
+        const errData = await res.json() as { detail?: string };
+        showToast(errData.detail || 'Failed to approve resolution', 'error');
+      }
+    } catch {
+      showToast('Error connecting to backend API', 'error');
+    }
+  };
+
+  // Reject / Request Revision API Call
+  const handleRejectResolution = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedComplaintId) return;
+    if (!rejectionFeedback.trim()) {
+      showToast('Feedback cannot be empty.', 'error');
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`/api/complaints/${selectedComplaintId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback: rejectionFeedback.trim() }),
+      });
+      if (res.ok) {
+        showToast('Revision request submitted successfully!', 'success');
+        setIsRejectModalOpen(false);
+        setRejectionFeedback('');
+        await loadStats();
+        await loadComplaints();
+        await loadComplaintDetails(selectedComplaintId);
+      } else {
+        const errData = await res.json() as { detail?: string };
+        showToast(errData.detail || 'Failed to reject resolution', 'error');
+      }
+    } catch {
+      showToast('Error connecting to backend API', 'error');
     }
   };
 
@@ -601,6 +734,62 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
+                {/* Case Actions Panel */}
+                <div className="detail-section">
+                  <h3 className="detail-section-title">Case Actions</h3>
+                  <div className="detail-actions-panel">
+                    {/* Claim Case Button (Case Handlers only, when status is Registered or Needs Revision) */}
+                    {(selectedDetails.status === "Registered" || selectedDetails.status === "Needs Revision") && 
+                     activeUser?.role === "Case Handler" && (
+                      <button className="btn btn-primary btn-full" onClick={handleClaimCase}>
+                        Claim Case & Start Investigation
+                      </button>
+                    )}
+
+                    {/* Propose Resolution Button (Case Handlers only, when status is Under Investigation and assigned to current user) */}
+                    {selectedDetails.status === "Under Investigation" && 
+                     selectedDetails.assigned_to === activeUser?.username && (
+                      <button className="btn btn-primary btn-full" onClick={() => setIsProposalModalOpen(true)}>
+                        Propose Resolution
+                      </button>
+                    )}
+
+                    {/* Supervisor Actions (Supervisors only, when status is Resolution Proposed) */}
+                    {selectedDetails.status === "Resolution Proposed" && activeUser?.role === "Supervisor" && (
+                      <div className="supervisor-action-buttons">
+                        <button className="btn btn-primary btn-approve" onClick={handleApproveResolution}>
+                          Approve & Resolve Case
+                        </button>
+                        <button className="btn btn-secondary btn-reject" onClick={() => setIsRejectModalOpen(true)}>
+                          Request Revision (Reject)
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Non-assignee info message */}
+                    {selectedDetails.status === "Under Investigation" && 
+                     selectedDetails.assigned_to !== activeUser?.username && (
+                      <div className="info-message">
+                        This case is currently being investigated by @{selectedDetails.assigned_to}.
+                      </div>
+                    )}
+
+                    {/* Resolved indicator */}
+                    {selectedDetails.status === "Resolved" && (
+                      <div className="success-message">
+                        This case is resolved and closed. No further actions are required.
+                      </div>
+                    )}
+                    
+                    {/* Fallback for CSR roles on existing cases */}
+                    {activeUser?.role === "CSR" && (
+                      <div className="info-message">
+                        Customer Service Representatives have read-only access to active cases.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Audit Log Vertical Timeline */}
                 <div className="detail-section">
                   <h3 className="detail-section-title">Audit Log & History Timeline</h3>
@@ -626,6 +815,23 @@ const Dashboard: React.FC = () => {
                       <p className="no-timeline-text">No audit history found.</p>
                     )}
                   </div>
+
+                  {/* Comment input form (Any Case Handler can add comments/notes to any case) */}
+                  {activeUser?.role === "Case Handler" && (
+                    <form onSubmit={handleAddComment} className="comment-form-container">
+                      <input
+                        type="text"
+                        className="form-input comment-input"
+                        placeholder="Type internal comment or timeline note..."
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        required
+                      />
+                      <button type="submit" className="btn btn-primary btn-comment">
+                        Add Note
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
             ) : null}
@@ -799,6 +1005,92 @@ const Dashboard: React.FC = () => {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Log Complaint
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Propose Resolution Overlay Modal */}
+      {isProposalModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <div className="modal-header-title">
+                <svg viewBox="0 0 24 24" width="22" height="22" className="text-accent modal-title-icon">
+                  <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h10v2zm0-4H8v-2h10v2zm-3-5V3.5L18.5 9H13z" />
+                </svg>
+                Propose Case Resolution
+              </div>
+              <button className="btn-close-modal" onClick={() => setIsProposalModalOpen(false)}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleProposeResolution} className="modal-form">
+              <div className="form-scrollable">
+                <label className="form-label required">Proposed Resolution Notes</label>
+                <textarea
+                  className="form-input form-textarea"
+                  placeholder="Detail the actions taken to resolve the complaint, including any fee waivers, refunds, or customer communications..."
+                  required
+                  rows={6}
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setIsProposalModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Submit Proposal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reject / Request Revision Overlay Modal */}
+      {isRejectModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <div className="modal-header-title">
+                <svg viewBox="0 0 24 24" width="22" height="22" className="text-critical modal-title-icon">
+                  <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                </svg>
+                Request Case Revision (Reject)
+              </div>
+              <button className="btn-close-modal" onClick={() => setIsRejectModalOpen(false)}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleRejectResolution} className="modal-form">
+              <div className="form-scrollable">
+                <label className="form-label required">Revision Feedback & Instructions</label>
+                <textarea
+                  className="form-input form-textarea"
+                  placeholder="Specify what additional investigations or adjustments are required from the Case Handler..."
+                  required
+                  rows={6}
+                  value={rejectionFeedback}
+                  onChange={(e) => setRejectionFeedback(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setIsRejectModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Submit Feedback
                 </button>
               </div>
             </form>
