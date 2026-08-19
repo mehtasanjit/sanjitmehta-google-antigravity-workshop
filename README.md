@@ -16,6 +16,8 @@ The repository brings together:
 
 The repository is intended for learning and experimentation. Its examples demonstrate development patterns and integration concepts and must be reviewed, secured, and hardened before production use.
 
+Developers should read the [AI-Assisted Developer Playbook](docs/agy-common/developer-playbook-greenfield-and-brownfield.md) before beginning a greenfield or brownfield exercise. It provides the recommended Gemini CLI and Antigravity CLI workflow, task-contract templates, approval gates, verification practices, and definitions of done.
+
 ## Repository Overview
 
 The repository is organized into five main areas:
