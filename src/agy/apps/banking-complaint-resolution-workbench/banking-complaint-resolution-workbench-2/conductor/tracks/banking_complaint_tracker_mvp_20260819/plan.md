@@ -1,13 +1,13 @@
 # Implementation Plan - Banking Internal Complaint Tracker MVP
 
 ## Phase 1: Project Scaffolding & Environment Setup
-- [ ] Task 1.1: Backend Environment & Scaffolding
-  - [ ] Initialize backend directory (`backend/`)
-  - [ ] Create Python configuration and dependency files (`requirements.txt`, `pyproject.toml`)
-  - [ ] Set up basic environment configuration variables (`.env`)
-- [ ] Task 1.2: Frontend Vite + React Scaffolding
-  - [ ] Initialize frontend directory (`frontend/` using Vite + React + TypeScript)
-  - [ ] Setup npm packages, folder structures, and test configurations (Vitest)
+- [x] Task 1.1: Backend Environment & Scaffolding (6a0e238)
+  - [x] Initialize backend directory (`backend/`)
+  - [x] Create Python configuration and dependency files (`requirements.txt`, `pyproject.toml`)
+  - [x] Set up basic environment configuration variables (`.env`)
+- [~] Task 1.2: Frontend Vite + React Scaffolding
+  - [~] Initialize frontend directory (`frontend/` using Vite + React + TypeScript)
+  - [~] Setup npm packages, folder structures, and test configurations (Vitest)
 - [ ] Task 1.3: Verify Setup Build
   - [ ] Run basic build and linter checks on empty scaffold directories
   - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
