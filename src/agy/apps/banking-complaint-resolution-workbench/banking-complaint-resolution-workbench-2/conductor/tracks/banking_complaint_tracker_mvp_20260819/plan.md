@@ -23,10 +23,10 @@
 - [x] Task 2.3: Write API Endpoint & Transition Tests (Red Phase) (dcbf3ce)
   - [x] Create test file for FastAPI routes (`GET /api/complaints`, `POST /api/complaints`, `POST /api/complaints/{id}/transition`)
   - [x] Run backend tests and confirm failure
-- [~] Task 2.4: Implement API Endpoints & State Machine (Green Phase)
-  - [ ] Implement the FastAPI routes and business logic for the state machine transitions
-  - [ ] Run backend tests and verify they pass (100% success, >80% coverage)
-  - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 2.4: Implement API Endpoints & State Machine (Green Phase) (9f444fe)
+  - [x] Implement the FastAPI routes and business logic for the state machine transitions
+  - [x] Run backend tests and verify they pass (100% success, >80% coverage)
+  - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (9f444fe)
 
 ## Phase 3: React Frontend & Dashboard UI (TDD-Driven)
 - [ ] Task 3.1: Write Layout & Dashboard Tests (Red Phase)
