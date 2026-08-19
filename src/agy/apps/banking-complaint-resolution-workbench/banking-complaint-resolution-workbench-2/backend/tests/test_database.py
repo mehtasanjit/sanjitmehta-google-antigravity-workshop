@@ -60,6 +60,7 @@ def test_models_creation():
         
     finally:
         db.close()
+        engine.dispose()
 
 
 def test_database_seeding():
@@ -87,7 +88,7 @@ def test_database_seeding():
             assert logs[0].action == "Created"
             
         # Verify varying severities
-        severities = [c.severity for complaint in all_complaints]
+        severities = [complaint.severity for complaint in all_complaints]
         # Should have at least one High, Medium, Low
         assert "High" in severities
         assert "Medium" in severities
@@ -99,3 +100,4 @@ def test_database_seeding():
         
     finally:
         db.close()
+        engine.dispose()
