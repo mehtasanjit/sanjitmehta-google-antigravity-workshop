@@ -19,7 +19,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (0529ccc)
 
 ## Phase 4: Case Investigation & Audit Timeline UI
-- [ ] Task 4.1: Implement Case Detail split-screen master-detail layout.
-- [ ] Task 4.2: Implement Case Details visual, scrollable vertical audit timeline feed.
-- [ ] Task 4.3: Implement Action panels (Claim, Propose Resolution modal, and Supervisor Approve/Reject dialogs).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 4.1: Implement Case Detail split-screen master-detail layout. (2e8c8e7)
+- [x] Task 4.2: Implement Case Details visual, scrollable vertical audit timeline feed. (2e8c8e7)
+- [x] Task 4.3: Implement Action panels (Claim, Propose Resolution modal, and Supervisor Approve/Reject dialogs). (2e8c8e7)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (2e8c8e7)
