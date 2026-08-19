@@ -1,0 +1,11 @@
+[[rule]]
+toolName = ["read_file", "grep_search", "glob", "list_directory"]
+decision = "allow"
+priority = 100
+
+# Auto-allow safe read-only shell commands
+[[rule]]
+toolName = "run_shell_command"
+commandRegex = "^(grep|tail|cat|find|ls|ps|git status|git diff|git log)( |$)"
+decision = "allow"
+priority = 100
