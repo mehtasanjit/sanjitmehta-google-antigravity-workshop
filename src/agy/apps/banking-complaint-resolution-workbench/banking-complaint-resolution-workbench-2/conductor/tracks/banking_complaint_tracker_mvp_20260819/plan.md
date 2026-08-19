@@ -8,13 +8,13 @@
 - [x] Task 1.2: Frontend Vite + React Scaffolding (7a0a577)
   - [x] Initialize frontend directory (`frontend/` using Vite + React + TypeScript)
   - [x] Setup npm packages, folder structures, and test configurations (Vitest)
-- [~] Task 1.3: Verify Setup Build
-  - [~] Run basic build and linter checks on empty scaffold directories
-  - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 1.3: Verify Setup Build (b6245fd)
+  - [x] Run basic build and linter checks on empty scaffold directories
+  - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Database Schema & FastAPI Backend (TDD-Driven)
-- [ ] Task 2.1: Write Database & Seeding Tests (Red Phase)
-  - [ ] Create test file for database models, SQLite connection, and initial seed logic
+- [~] Task 2.1: Write Database & Seeding Tests (Red Phase)
+  - [~] Create test file for database models, SQLite connection, and initial seed logic
   - [ ] Run backend tests and confirm failure
 - [ ] Task 2.2: Implement Database & Seeding (Green Phase)
   - [ ] Define SQLAlchemy database models (`Complaint` and `ActivityLog`)
