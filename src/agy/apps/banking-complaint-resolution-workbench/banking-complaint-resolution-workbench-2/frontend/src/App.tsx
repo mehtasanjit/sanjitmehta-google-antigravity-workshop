@@ -55,6 +55,67 @@ function App() {
   // Offline mock logs registry (to persist transition history when backend is not running)
   const [localLogs, setLocalLogs] = useState<Record<number, ActivityLog[]>>({});
 
+  // Form State
+  const [formData, setFormData] = useState({
+    customer_name: '',
+    account_number: '',
+    account_type: 'Checking',
+    severity: 'Medium',
+    description: ''
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmitComplaint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    if (!formData.customer_name.trim()) {
+      newErrors.customer_name = "Customer name is required";
+    }
+    if (!formData.description.trim()) {
+      newErrors.description = "Detailed description is required";
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/complaints', formData);
+      setComplaints(prev => [...prev, response.data]);
+      setCurrentView('dashboard');
+      setFormData({
+        customer_name: '',
+        account_number: '',
+        account_type: 'Checking',
+        severity: 'Medium',
+        description: ''
+      });
+      setErrors({});
+    } catch (err: any) {
+      console.warn('Backend submission failed, saving locally (offline mode):', err.message);
+      const mockNewComplaint: Complaint = {
+        id: Date.now(),
+        customer_name: formData.customer_name,
+        account_number: formData.account_number || "XXXXXX0000",
+        account_type: formData.account_type,
+        severity: formData.severity,
+        status: "New",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setComplaints(prev => [...prev, mockNewComplaint]);
+      setCurrentView('dashboard');
+      setFormData({
+        customer_name: '',
+        account_number: '',
+        account_type: 'Checking',
+        severity: 'Medium',
+        description: ''
+      });
+      setErrors({});
+    }
+  };
+
   // Helper to construct mock initial logs for seeded complaints
   const getInitialLogs = (complaintId: number, createdAt: string): ActivityLog[] => {
     return [
@@ -470,9 +531,101 @@ function App() {
 
         {currentView === 'new-complaint' && (
           <div className="dashboard-view">
-            <div className="content-placeholder">
-              <h3>Complaint Intake Form</h3>
-              <p>Form to register a new customer complaint will render here.</p>
+            <div className="form-card">
+              <h3 className="form-title">Complaint Intake Form</h3>
+              
+              <form onSubmit={handleSubmitComplaint} noValidate>
+                <div className="form-grid">
+                  <div className="form-group form-group-full">
+                    <label htmlFor="customer_name" className="form-label">Customer Name</label>
+                    <input 
+                      type="text" 
+                      id="customer_name" 
+                      className={`form-input ${errors.customer_name ? 'error' : ''}`}
+                      placeholder="Enter customer's full name"
+                      value={formData.customer_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
+                    />
+                    {errors.customer_name && <span className="form-error-msg">{errors.customer_name}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="account_number" className="form-label">Account Number</label>
+                    <input 
+                      type="text" 
+                      id="account_number" 
+                      className="form-input"
+                      placeholder="e.g. XXXXXX1234"
+                      value={formData.account_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, account_number: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="account_type" className="form-label">Account Type</label>
+                    <select 
+                      id="account_type" 
+                      className="form-select"
+                      value={formData.account_type}
+                      onChange={(e) => setFormData(prev => ({ ...prev, account_type: e.target.value }))}
+                    >
+                      <option value="Checking">Checking</option>
+                      <option value="Savings">Savings</option>
+                      <option value="Credit Card">Credit Card</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group form-group-full">
+                    <label htmlFor="severity" className="form-label">Severity Level</label>
+                    <select 
+                      id="severity" 
+                      className="form-select"
+                      value={formData.severity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, severity: e.target.value }))}
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group form-group-full">
+                    <label htmlFor="description" className="form-label">Detailed Description</label>
+                    <textarea 
+                      id="description" 
+                      className={`form-textarea ${errors.description ? 'error' : ''}`}
+                      rows={5}
+                      placeholder="Provide detailed description of the customer's issue..."
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                    {errors.description && <span className="form-error-msg">{errors.description}</span>}
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button 
+                    type="button" 
+                    className="btn-cancel"
+                    onClick={() => {
+                      setCurrentView('dashboard');
+                      setFormData({
+                        customer_name: '',
+                        account_number: '',
+                        account_type: 'Checking',
+                        severity: 'Medium',
+                        description: ''
+                      });
+                      setErrors({});
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-submit">
+                    Submit Complaint
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
