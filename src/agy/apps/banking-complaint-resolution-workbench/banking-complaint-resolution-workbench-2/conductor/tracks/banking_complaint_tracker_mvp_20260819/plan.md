@@ -16,11 +16,11 @@
 - [x] Task 2.1: Write Database & Seeding Tests (Red Phase) (f634a0e)
   - [x] Create test file for database models, SQLite connection, and initial seed logic
   - [x] Run backend tests and confirm failure
-- [~] Task 2.2: Implement Database & Seeding (Green Phase)
-  - [ ] Define SQLAlchemy database models (`Complaint` and `ActivityLog`)
-  - [ ] Implement database connection engine and seeding script for the 4 mock complaints
-  - [ ] Run backend tests and verify they pass
-- [ ] Task 2.3: Write API Endpoint & Transition Tests (Red Phase)
+- [x] Task 2.2: Implement Database & Seeding (Green Phase) (c98572a)
+  - [x] Define SQLAlchemy database models (`Complaint` and `ActivityLog`)
+  - [x] Implement database connection engine and seeding script for the 4 mock complaints
+  - [x] Run backend tests and verify they pass
+- [~] Task 2.3: Write API Endpoint & Transition Tests (Red Phase)
   - [ ] Create test file for FastAPI routes (`GET /api/complaints`, `POST /api/complaints`, `POST /api/complaints/{id}/transition`)
   - [ ] Run backend tests and confirm failure
 - [ ] Task 2.4: Implement API Endpoints & State Machine (Green Phase)
