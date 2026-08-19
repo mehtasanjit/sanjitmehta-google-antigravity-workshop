@@ -43,10 +43,10 @@
   - [x] Implement four-column Kanban board utilizing card action buttons for transitions
   - [x] Implement slide-out details drawer containing complaint details and Activity Log timeline
   - [x] Confirm tests pass
-- [~] Task 3.5: Write Registration Form Tests (Red Phase)
-  - [ ] Create test file to verify validation and input processing of the complaint form
-  - [ ] Confirm tests fail
-- [ ] Task 3.6: Implement Complaint Registration Form (Green Phase)
+- [x] Task 3.5: Write Registration Form Tests (Red Phase) (5aa60f1)
+  - [x] Create test file to verify validation and input processing of the complaint form
+  - [x] Confirm tests fail
+- [~] Task 3.6: Implement Complaint Registration Form (Green Phase)
   - [ ] Create the form modal, hook up input validation, and connect it to state
   - [ ] Confirm tests pass
   - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
