@@ -29,10 +29,10 @@
   - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (9f444fe)
 
 ## Phase 3: React Frontend & Dashboard UI (TDD-Driven)
-- [ ] Task 3.1: Write Layout & Dashboard Tests (Red Phase)
-  - [ ] Create Vitest test file to verify header, sidebar, and dashboard metrics rendering
-  - [ ] Confirm frontend tests fail
-- [ ] Task 3.2: Implement Color Tokens, Styles, and Page Frame (Green Phase)
+- [x] Task 3.1: Write Layout & Dashboard Tests (Red Phase) (eedae50)
+  - [x] Create Vitest test file to verify header, sidebar, and dashboard metrics rendering
+  - [x] Confirm frontend tests fail
+- [~] Task 3.2: Implement Layout & Dashboard (Green Phase)
   - [ ] Write CSS custom properties and core stylesheets for the Charcoal & Mint theme
   - [ ] Implement React dashboard frame and summary cards
   - [ ] Confirm frontend tests pass
