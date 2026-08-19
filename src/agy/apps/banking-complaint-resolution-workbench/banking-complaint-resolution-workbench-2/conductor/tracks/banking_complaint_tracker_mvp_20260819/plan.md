@@ -39,11 +39,11 @@
 - [x] Task 3.3: Write Kanban Board & Action Button Tests (Red Phase) (57520f3)
   - [x] Create Vitest test file to verify column grouping and click-to-transition interactions
   - [x] Confirm tests fail
-- [~] Task 3.4: Implement Interactive Kanban Board & Details Drawer (Green Phase)
-  - [ ] Implement four-column Kanban board utilizing card action buttons for transitions
-  - [ ] Implement slide-out details drawer containing complaint details and Activity Log timeline
-  - [ ] Confirm tests pass
-- [ ] Task 3.5: Write Registration Form Tests (Red Phase)
+- [x] Task 3.4: Implement Interactive Kanban Board & Details Drawer (Green Phase) (a02825f)
+  - [x] Implement four-column Kanban board utilizing card action buttons for transitions
+  - [x] Implement slide-out details drawer containing complaint details and Activity Log timeline
+  - [x] Confirm tests pass
+- [~] Task 3.5: Write Registration Form Tests (Red Phase)
   - [ ] Create test file to verify validation and input processing of the complaint form
   - [ ] Confirm tests fail
 - [ ] Task 3.6: Implement Complaint Registration Form (Green Phase)
