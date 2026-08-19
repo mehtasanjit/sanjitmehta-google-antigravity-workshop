@@ -5,11 +5,11 @@
   - [x] Initialize backend directory (`backend/`)
   - [x] Create Python configuration and dependency files (`requirements.txt`, `pyproject.toml`)
   - [x] Set up basic environment configuration variables (`.env`)
-- [~] Task 1.2: Frontend Vite + React Scaffolding
-  - [~] Initialize frontend directory (`frontend/` using Vite + React + TypeScript)
-  - [~] Setup npm packages, folder structures, and test configurations (Vitest)
-- [ ] Task 1.3: Verify Setup Build
-  - [ ] Run basic build and linter checks on empty scaffold directories
+- [x] Task 1.2: Frontend Vite + React Scaffolding (7a0a577)
+  - [x] Initialize frontend directory (`frontend/` using Vite + React + TypeScript)
+  - [x] Setup npm packages, folder structures, and test configurations (Vitest)
+- [~] Task 1.3: Verify Setup Build
+  - [~] Run basic build and linter checks on empty scaffold directories
   - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Database Schema & FastAPI Backend (TDD-Driven)
