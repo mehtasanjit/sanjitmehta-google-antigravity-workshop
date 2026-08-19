@@ -13,10 +13,10 @@
   - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Database Schema & FastAPI Backend (TDD-Driven)
-- [~] Task 2.1: Write Database & Seeding Tests (Red Phase)
-  - [~] Create test file for database models, SQLite connection, and initial seed logic
-  - [ ] Run backend tests and confirm failure
-- [ ] Task 2.2: Implement Database & Seeding (Green Phase)
+- [x] Task 2.1: Write Database & Seeding Tests (Red Phase) (f634a0e)
+  - [x] Create test file for database models, SQLite connection, and initial seed logic
+  - [x] Run backend tests and confirm failure
+- [~] Task 2.2: Implement Database & Seeding (Green Phase)
   - [ ] Define SQLAlchemy database models (`Complaint` and `ActivityLog`)
   - [ ] Implement database connection engine and seeding script for the 4 mock complaints
   - [ ] Run backend tests and verify they pass
