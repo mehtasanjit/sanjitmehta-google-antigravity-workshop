@@ -55,7 +55,7 @@
 - [x] Task 4.1: Integrate API Clients (a6c3e57)
   - [x] Connect React frontend components to FastAPI backend endpoints
   - [x] Ensure state transitions trigger instant UI updates and re-fetch logs
-- [~] Task 4.2: End-to-End User Scenario Validation
-  - [ ] Perform a full user-path scenario run-through: Intake Specialist registers card -> Specialist assigns specialist -> Investigator moves to Investigation -> Investigator resolves case -> Inspect activity logs
-  - [ ] Verify complete visual styling on desktop and mobile screens
-  - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 4.2: End-to-End User Scenario Validation (bcdd078)
+  - [x] Perform a full user-path scenario run-through: Intake Specialist registers card -> Specialist assigns specialist -> Investigator moves to Investigation -> Investigator resolves case -> Inspect activity logs
+  - [x] Verify complete visual styling on desktop and mobile screens
+  - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (checkpoint: bcdd078)
