@@ -46,10 +46,10 @@
 - [x] Task 3.5: Write Registration Form Tests (Red Phase) (5aa60f1)
   - [x] Create test file to verify validation and input processing of the complaint form
   - [x] Confirm tests fail
-- [~] Task 3.6: Implement Complaint Registration Form (Green Phase)
-  - [ ] Create the form modal, hook up input validation, and connect it to state
-  - [ ] Confirm tests pass
-  - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 3.6: Implement Complaint Registration Form (Green Phase) (a6c3e57)
+  - [x] Create the form modal, hook up input validation, and connect it to state
+  - [x] Confirm tests pass
+  - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (checkpoint: a6c3e57)
 
 ## Phase 4: Full-Stack Integration & Final Verification
 - [ ] Task 4.1: Integrate API Clients
