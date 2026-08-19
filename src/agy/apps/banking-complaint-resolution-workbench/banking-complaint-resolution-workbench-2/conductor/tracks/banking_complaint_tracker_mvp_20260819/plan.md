@@ -20,10 +20,10 @@
   - [x] Define SQLAlchemy database models (`Complaint` and `ActivityLog`)
   - [x] Implement database connection engine and seeding script for the 4 mock complaints
   - [x] Run backend tests and verify they pass
-- [~] Task 2.3: Write API Endpoint & Transition Tests (Red Phase)
-  - [ ] Create test file for FastAPI routes (`GET /api/complaints`, `POST /api/complaints`, `POST /api/complaints/{id}/transition`)
-  - [ ] Run backend tests and confirm failure
-- [ ] Task 2.4: Implement API Endpoints & State Machine (Green Phase)
+- [x] Task 2.3: Write API Endpoint & Transition Tests (Red Phase) (dcbf3ce)
+  - [x] Create test file for FastAPI routes (`GET /api/complaints`, `POST /api/complaints`, `POST /api/complaints/{id}/transition`)
+  - [x] Run backend tests and confirm failure
+- [~] Task 2.4: Implement API Endpoints & State Machine (Green Phase)
   - [ ] Implement the FastAPI routes and business logic for the state machine transitions
   - [ ] Run backend tests and verify they pass (100% success, >80% coverage)
   - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
