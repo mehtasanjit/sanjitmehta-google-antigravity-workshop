@@ -1,0 +1,382 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: APEX BANK
+          - generic [ref=e16]: Workbench 4.0
+        - paragraph [ref=e17]: Internal Dispute & Regulatory Resolution
+      - generic [ref=e18]:
+        - button "Dispute Queue 7" [ref=e19] [cursor=pointer]:
+          - generic [ref=e21]: Dispute Queue
+          - generic [ref=e22]: "7"
+        - button "Analytics & SLAs" [ref=e23] [cursor=pointer]
+        - button "CFPB & Regulatory" [ref=e27] [cursor=pointer]
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]: MC
+          - combobox [ref=e35] [cursor=pointer]:
+            - option "Marcus Chen (Lead)" [selected]
+            - option "Sarah Jenkins (Senior)"
+            - option "Elena Rostova (VP)"
+            - option "Devon Miller (Consumer)"
+        - button "Reset to sample complaints" [ref=e36] [cursor=pointer]
+        - button "Export complaints CSV" [ref=e40] [cursor=pointer]
+        - button "Toggle theme" [ref=e44] [cursor=pointer]
+        - button "Intake Case" [ref=e47] [cursor=pointer]
+  - main [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53] [cursor=pointer]:
+        - generic [ref=e54]: Active Queue
+        - generic [ref=e60]:
+          - generic [ref=e61]: "6"
+          - generic [ref=e62]: cases
+        - generic [ref=e63]: 1 resolved this cycle
+      - generic [ref=e65] [cursor=pointer]:
+        - generic [ref=e66]: Critical Priority
+        - generic [ref=e71]:
+          - generic [ref=e72]: "2"
+          - generic [ref=e73]: Immediate
+        - generic [ref=e74]: 1 escalated to VP/Legal
+      - generic [ref=e75] [cursor=pointer]:
+        - generic [ref=e76]: SLA < 24h
+        - generic [ref=e82]:
+          - generic [ref=e83]: "2"
+          - generic [ref=e84]: deadlines
+        - generic [ref=e85]: Reg E / CFPB Timers
+      - generic [ref=e86] [cursor=pointer]:
+        - generic [ref=e87]: Compliance
+        - generic [ref=e92]:
+          - generic [ref=e93]: "7"
+          - generic [ref=e94]: mandates
+        - generic [ref=e95]: 100% CFPB Audit Trail
+      - generic [ref=e96]:
+        - generic [ref=e97]: Disputed Volume
+        - generic [ref=e102]: $20,310
+        - generic [ref=e104]: Under active review
+      - generic [ref=e105]:
+        - generic [ref=e106]: SLA Adherence
+        - generic [ref=e112]: 96.4%
+        - generic [ref=e114]: "Target: >95.0%"
+    - generic [ref=e115]:
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - combobox [ref=e121]:
+              - option "All Products" [selected]
+              - option "Wire Transfers"
+              - option "Credit Cards"
+              - option "Checking & Savings"
+              - option "Mortgages & Loans"
+              - option "Commercial Banking"
+            - combobox [ref=e123]:
+              - option "All Statuses" [selected]
+              - option "New"
+              - option "Under Investigation"
+              - option "Pending Customer"
+              - option "Escalated"
+              - option "Resolved"
+            - combobox [ref=e125]:
+              - option "All Priorities" [selected]
+              - option "Critical"
+              - option "High"
+              - option "Medium"
+              - option "Low"
+          - generic [ref=e126]: Showing 7 disputes
+        - table [ref=e128]:
+          - rowgroup [ref=e129]:
+            - row [ref=e130]:
+              - columnheader "Case / Customer" [ref=e131]
+              - columnheader "Product Category" [ref=e132]
+              - columnheader "Priority" [ref=e133]
+              - columnheader "Disputed Amt" [ref=e134]
+              - columnheader "Regulatory / SLA" [ref=e135]
+              - columnheader "Status" [ref=e136]
+              - columnheader "Assigned Specialist" [ref=e137]
+              - columnheader [ref=e138]
+          - rowgroup [ref=e139]:
+            - row [ref=e140] [cursor=pointer]:
+              - cell "CMP-2026-9042 PRIVATE CLIENT Eleanor Vance ACC-882190-01" [ref=e141]:
+                - generic [ref=e142]:
+                  - generic [ref=e143]:
+                    - generic [ref=e144]: CMP-2026-9042
+                    - generic [ref=e145]: PRIVATE CLIENT
+                  - generic [ref=e146]: Eleanor Vance
+                  - generic [ref=e147]: ACC-882190-01
+              - cell "Wire Transfers CFPB Portal" [ref=e148]:
+                - generic [ref=e149]:
+                  - generic [ref=e150]: Wire Transfers
+                  - generic [ref=e151]: CFPB Portal
+              - cell "Critical" [ref=e152]
+              - cell "$12,450.00" [ref=e155]
+              - cell [ref=e157]:
+                - generic [ref=e158]:
+                  - generic [ref=e159]: Due in 10h
+                  - generic [ref=e164]: CFPB Expedited & Reg E
+              - cell "Investigating" [ref=e167]
+              - cell "Marcus Chen (Lead Fraud Analyst)" [ref=e168]
+              - cell [ref=e169]
+            - row [ref=e172] [cursor=pointer]:
+              - cell "CMP-2026-8941 PREFERRED David Sterling ACC-541209-88" [ref=e173]:
+                - generic [ref=e174]:
+                  - generic [ref=e175]:
+                    - generic [ref=e176]: CMP-2026-8941
+                    - generic [ref=e177]: PREFERRED
+                  - generic [ref=e178]: David Sterling
+                  - generic [ref=e179]: ACC-541209-88
+              - cell "Credit Cards Mobile App" [ref=e180]:
+                - generic [ref=e181]:
+                  - generic [ref=e182]: Credit Cards
+                  - generic [ref=e183]: Mobile App
+              - cell "High" [ref=e184]
+              - cell "$1,850.00" [ref=e186]
+              - cell [ref=e188]:
+                - generic [ref=e189]:
+                  - generic [ref=e190]: Due in 33h
+                  - generic [ref=e195]: Regulation Z (Truth in Lending)
+              - cell "Investigating" [ref=e198]
+              - cell "Sarah Jenkins" [ref=e199]
+              - cell [ref=e200]
+            - row [ref=e203] [cursor=pointer]:
+              - cell "CMP-2026-8790 STANDARD Maria Rodriguez-Santos ACC-331902-12" [ref=e204]:
+                - generic [ref=e205]:
+                  - generic [ref=e206]:
+                    - generic [ref=e207]: CMP-2026-8790
+                    - generic [ref=e208]: STANDARD
+                  - generic [ref=e209]: Maria Rodriguez-Santos
+                  - generic [ref=e210]: ACC-331902-12
+              - cell "Checking & Savings Branch" [ref=e211]:
+                - generic [ref=e212]:
+                  - generic [ref=e213]: Checking & Savings
+                  - generic [ref=e214]: Branch
+              - cell "Medium" [ref=e215]
+              - cell "$210.00" [ref=e217]
+              - cell [ref=e219]:
+                - generic [ref=e220]:
+                  - generic [ref=e221]: Due in 2 days
+                  - generic [ref=e226]: CFPB Unfair Practice Review
+              - cell "New Intake" [ref=e229]
+              - cell "Unassigned" [ref=e230]
+              - cell [ref=e231]
+            - row [ref=e234] [cursor=pointer]:
+              - 'cell "CMP-2026-8610 COMMERCIAL Apex Logistics LLC (Rep: Thomas Hayes) ACC-901188-44" [ref=e235]':
+                - generic [ref=e236]:
+                  - generic [ref=e237]:
+                    - generic [ref=e238]: CMP-2026-8610
+                    - generic [ref=e239]: COMMERCIAL
+                  - generic [ref=e240]: "Apex Logistics LLC (Rep: Thomas Hayes)"
+                  - generic [ref=e241]: ACC-901188-44
+              - cell "Commercial Banking Phone" [ref=e242]:
+                - generic [ref=e243]:
+                  - generic [ref=e244]: Commercial Banking
+                  - generic [ref=e245]: Phone
+              - cell "Critical" [ref=e246]
+              - cell "N/A ($0.00)" [ref=e249]
+              - cell [ref=e250]:
+                - generic [ref=e251]:
+                  - generic [ref=e252]: Due in 2h
+                  - generic [ref=e257]: Executive Escalation
+              - cell "Escalated" [ref=e260]
+              - cell "Elena Rostova (VP Ops & Compliance)" [ref=e261]
+              - cell [ref=e262]
+            - row [ref=e265] [cursor=pointer]:
+              - cell "CMP-2026-8502 PREFERRED Kendra Washington ACC-190284-91" [ref=e266]:
+                - generic [ref=e267]:
+                  - generic [ref=e268]:
+                    - generic [ref=e269]: CMP-2026-8502
+                    - generic [ref=e270]: PREFERRED
+                  - generic [ref=e271]: Kendra Washington
+                  - generic [ref=e272]: ACC-190284-91
+              - cell "Mortgages & Loans CFPB Portal" [ref=e273]:
+                - generic [ref=e274]:
+                  - generic [ref=e275]: Mortgages & Loans
+                  - generic [ref=e276]: CFPB Portal
+              - cell "High" [ref=e277]
+              - cell "N/A ($0.00)" [ref=e279]
+              - cell [ref=e280]:
+                - generic [ref=e281]:
+                  - generic [ref=e282]: Due in 3 days
+                  - generic [ref=e287]: FCRA (Fair Credit Reporting Act)
+              - cell "Investigating" [ref=e290]
+              - cell "Marcus Chen (Lead Fraud Analyst)" [ref=e291]
+              - cell [ref=e292]
+            - row [ref=e295] [cursor=pointer]:
+              - cell "CMP-2026-8319 STANDARD Julian Patel ACC-774019-55" [ref=e296]:
+                - generic [ref=e297]:
+                  - generic [ref=e298]:
+                    - generic [ref=e299]: CMP-2026-8319
+                    - generic [ref=e300]: STANDARD
+                  - generic [ref=e301]: Julian Patel
+                  - generic [ref=e302]: ACC-774019-55
+              - cell "Checking & Savings Mobile App" [ref=e303]:
+                - generic [ref=e304]:
+                  - generic [ref=e305]: Checking & Savings
+                  - generic [ref=e306]: Mobile App
+              - cell "Medium" [ref=e307]
+              - cell "$400.00" [ref=e309]
+              - cell "Met SLA Regulation E § 1005.11" [ref=e311]:
+                - generic [ref=e312]:
+                  - generic [ref=e313]: Met SLA
+                  - generic [ref=e314]: Regulation E § 1005.11
+              - cell "Resolved" [ref=e317]
+              - cell "Sarah Jenkins" [ref=e318]
+              - cell [ref=e319]
+            - row [ref=e322] [cursor=pointer]:
+              - cell "CMP-2026-8199 PREFERRED Robert & Cynthia Hayes ACC-661902-39" [ref=e323]:
+                - generic [ref=e324]:
+                  - generic [ref=e325]:
+                    - generic [ref=e326]: CMP-2026-8199
+                    - generic [ref=e327]: PREFERRED
+                  - generic [ref=e328]: Robert & Cynthia Hayes
+                  - generic [ref=e329]: ACC-661902-39
+              - cell "Mortgages & Loans Phone" [ref=e330]:
+                - generic [ref=e331]:
+                  - generic [ref=e332]: Mortgages & Loans
+                  - generic [ref=e333]: Phone
+              - cell "Medium" [ref=e334]
+              - cell "$5,400.00" [ref=e336]
+              - cell [ref=e338]:
+                - generic [ref=e339]:
+                  - generic [ref=e340]: Due in 4 days
+                  - generic [ref=e345]: RESPA (Real Estate Settlement Procedures Act)
+              - cell "Investigating" [ref=e348]
+              - cell "Unassigned" [ref=e349]
+              - cell [ref=e350]
+      - generic [ref=e354]:
+        - generic [ref=e356]:
+          - generic [ref=e357]:
+            - generic [ref=e358]:
+              - generic [ref=e359]: CMP-2026-9042
+              - generic [ref=e360]: Wire Transfers
+              - generic [ref=e361]: CFPB Expedited & Reg E
+            - heading "Unauthorized International Wire Transfer of $12,450 to Overseas Account" [level=2] [ref=e364]
+            - generic [ref=e365]:
+              - generic [ref=e366]: Opened 8/20/2026
+              - generic [ref=e367]: •
+              - generic [ref=e368]: "Channel: CFPB Portal"
+              - generic [ref=e369]: •
+              - generic [ref=e370]: "SLA Target: 8/21/2026"
+          - generic [ref=e371]:
+            - generic [ref=e372]:
+              - generic [ref=e373]: Status
+              - combobox [ref=e374] [cursor=pointer]:
+                - option "New"
+                - option "Under Investigation" [selected]
+                - option "Pending Customer"
+                - option "Escalated"
+                - option "Resolved"
+            - generic [ref=e375]:
+              - generic [ref=e376]: Assigned Agent
+              - combobox [ref=e377] [cursor=pointer]:
+                - option "Unassigned" [selected]
+                - option "Marcus Chen"
+                - option "Sarah Jenkins"
+                - option "Elena Rostova"
+                - option "Devon Miller"
+            - generic [ref=e378]:
+              - generic [ref=e379]: Action
+              - button "Resolve & Close" [ref=e380] [cursor=pointer]
+        - generic [ref=e385]:
+          - generic [ref=e386]:
+            - generic [ref=e387]:
+              - generic [ref=e388]: Customer Profile
+              - generic [ref=e394]: Private Client
+            - generic [ref=e395]:
+              - generic [ref=e396]:
+                - generic [ref=e397]: Customer Name
+                - text: Eleanor Vance
+              - generic [ref=e398]:
+                - generic [ref=e399]:
+                  - generic [ref=e400]: Account Number
+                  - text: ACC-882190-01
+                - generic [ref=e401]:
+                  - generic [ref=e402]: Relationship Tenure
+                  - text: 8 years
+              - generic [ref=e403]:
+                - generic [ref=e404]:
+                  - generic [ref=e405]: Total Balance
+                  - text: $142,500.00
+                - generic [ref=e406]:
+                  - generic [ref=e407]: Risk Rating
+                  - text: Low (12/100)
+              - generic [ref=e408]:
+                - generic [ref=e409]: eleanor.vance@vanceholdings.com
+                - generic [ref=e414]: +1 (555) 234-8901
+          - generic [ref=e418]:
+            - generic [ref=e419]:
+              - generic [ref=e420]: Dispute Narrative & Root Cause
+              - generic [ref=e425]:
+                - generic [ref=e426]: "Disputed Amount:"
+                - generic [ref=e427]: $12,450.00
+            - generic [ref=e428]:
+              - generic [ref=e429]:
+                - generic [ref=e430]: "Identified Root Cause:"
+                - generic [ref=e431]: Suspected Account Takeover (ATO) / SIM Swap
+                - generic [ref=e432]: "Customer Sentiment:"
+                - generic [ref=e433]: Highly Frustrated / Threatening Legal Action
+              - generic [ref=e434]: "\"Customer reports that an unauthorized international wire transfer of $12,450.00 was executed from her commercial checking account yesterday morning to an unknown beneficiary bank in Cyprus. Customer states she was traveling abroad and experienced cellular network disruption (likely SIM swap). She never authorized two-factor verification codes and contacted the priority emergency fraud line within 2 hours of noticing the debit. She demands immediate provisional credit and a full recall request.\""
+              - generic [ref=e435]:
+                - generic [ref=e440]:
+                  - generic [ref=e441]: "Recommended Remediation: Issue Provisional Credit & Freeze Beneficiary Wire"
+                  - text: Regulation E § 1005.11(c) requires provisional credit within 10 business days for consumer accounts; under Private Client Service Agreement, expedited 24-hour credit is standard.
+                - button "Authorize Action" [ref=e442] [cursor=pointer]
+        - generic [ref=e443]:
+          - generic [ref=e445]:
+            - generic [ref=e446]:
+              - generic [ref=e447]:
+                - generic [ref=e453]:
+                  - generic [ref=e454]:
+                    - generic [ref=e455]: Gemini Dispute Co-Pilot
+                    - generic [ref=e456]: AI v3.7
+                  - paragraph [ref=e457]: Automated policy checks & draft synthesis
+                - button "Re-run AI Analysis" [ref=e458] [cursor=pointer]
+              - generic [ref=e464]:
+                - generic [ref=e465]: Policy Match & Compliance Risk
+                - paragraph [ref=e471]:
+                  - text: Root cause identified as
+                  - strong [ref=e472]: Suspected Account Takeover (ATO) / SIM Swap
+                  - text: . Regulatory standard
+                  - strong [ref=e473]: CFPB Expedited & Reg E
+                  - text: applies. Recommended handling time is < 24 business hours.
+              - generic [ref=e474]:
+                - generic [ref=e475]:
+                  - generic [ref=e476]: Draft Customer Communication
+                  - generic [ref=e477]:
+                    - button "Expedited Apology" [ref=e478] [cursor=pointer]
+                    - button "Formal Notice" [ref=e479] [cursor=pointer]
+                    - button "Info Request" [ref=e480] [cursor=pointer]
+                - textbox [ref=e482]
+            - generic [ref=e483]:
+              - button "Copy Text" [ref=e484] [cursor=pointer]
+              - button "Dispatch to Customer" [ref=e489] [cursor=pointer]
+          - generic [ref=e494]:
+            - generic [ref=e495]:
+              - generic [ref=e496]:
+                - heading "Regulatory Audit Trail & Case Timeline" [level=3] [ref=e500]
+                - generic [ref=e501]: 3 Events Logged
+              - generic [ref=e502]:
+                - generic [ref=e508]:
+                  - generic [ref=e509]:
+                    - generic [ref=e510]: CFPB Intake Portal
+                    - generic [ref=e511]: 08:15 AM • 8/20/2026
+                  - paragraph [ref=e512]: Complaint forwarded from CFPB Portal with expedited 15-day resolution mandate.
+                - generic [ref=e519]:
+                  - generic [ref=e520]:
+                    - generic [ref=e521]: Marcus Chen
+                    - generic [ref=e522]: 09:30 AM • 8/20/2026
+                  - paragraph [ref=e523]: "Initiated SWIFT gpi wire recall (GPI Ref: REC-994012) to intermediary bank. Flagged IP login origin (Larnaca, Cyprus via VPN)."
+                - generic [ref=e529]:
+                  - generic [ref=e530]:
+                    - generic [ref=e531]: Fraud Detection Engine
+                    - generic [ref=e532]: 02:20 PM • 8/20/2026
+                  - paragraph [ref=e533]: Device fingerprint mismatch detected. 2FA push notification acknowledged on unknown iOS 19.1 device.
+            - generic [ref=e534]:
+              - generic [ref=e535]:
+                - generic [ref=e536]: "Log Entry Type:"
+                - combobox [ref=e537]:
+                  - option "Internal Investigator Note" [selected]
+                  - option "System Transaction Verification"
+                  - option "CFPB / Regulatory Compliance Audit"
+              - generic [ref=e538]:
+                - textbox "Type internal note, investigator log, or compliance action..." [ref=e539]
+                - button "Log Note" [ref=e540] [cursor=pointer]
