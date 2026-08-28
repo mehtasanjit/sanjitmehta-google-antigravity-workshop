@@ -1,0 +1,21 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'github>GoogleCloudPlatform/kubernetes-engine-samples//.github/renovate-configs/dee-platform-ops.json5',
+    ':approveMajorUpdates',
+    'schedule:earlyMondays',
+  ],
+  lockFileMaintenance: {
+    enabled: true,
+  },
+  kubernetes: {
+    managerFilePatterns: [
+      '/\\.yaml$/',
+    ],
+    ignorePaths: [
+      'kubernetes-manifests/**',
+    ],
+  },
+  packageRules: [],
+  minimumReleaseAge: "1 week",
+}

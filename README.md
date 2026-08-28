@@ -18,6 +18,8 @@ The repository is intended for learning and experimentation. Its examples demons
 
 Developers should read the [AI-Assisted Developer Playbook](docs/agy-common/developer-playbook-greenfield-and-brownfield.md) before beginning a greenfield or brownfield exercise. It provides the recommended Gemini CLI and Antigravity CLI workflow, task-contract templates, approval gates, verification practices, and definitions of done.
 
+For an executive and enterprise view of the market, see the [Agentic Engineering Competitive Landscape](docs/agy-common/competitive-landscape-antigravity-claude-code-codex-cursor.md). It compares Google Antigravity, Claude Code, OpenAI Codex, and Cursor at the platform, agent-harness, developer-workbench, enterprise-control, and JAPAC adoption layers.
+
 ## Repository Overview
 
 The repository is organized into five main areas:

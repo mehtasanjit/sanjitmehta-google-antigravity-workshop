@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-23T00:38:47.888Z",
+  "repository": {
+    "vcs": "git",
+    "head": "4fb90bd66a8dd5c63ff8280775167137d572170d",
+    "branch": "main",
+    "dirty": true,
+    "changed_paths": [
+      "src/agy/apps/bank-of-anthos-main/bank-of-anthos-2/"
+    ]
+  },
+  "filesystem": {
+    "files_examined": 519,
+    "inventory_truncated": false,
+    "manifests": [
+      {
+        "path": "Makefile",
+        "sha256": "00edb2da52a7b07b95dda78121fa91520d4ef534930c80bfc645384a3c92f8a9"
+      },
+      {
+        "path": "pom.xml",
+        "sha256": "d3e353a5d274a29fc5b65698adb36b0b13c14afbdc8010932ff43b4f902ebf43"
+      },
+      {
+        "path": "src/accounts/contacts/pyproject.toml",
+        "sha256": "1d2971b2bf7199d4dfbc70cee7794337dcdb8e3a923c1f2420229105210bfb63"
+      },
+      {
+        "path": "src/accounts/userservice/pyproject.toml",
+        "sha256": "7d7e3784c9b405f6ca3da0c1278f08fcc8473383eba021e7c34a1590256a558e"
+      },
+      {
+        "path": "src/frontend/pyproject.toml",
+        "sha256": "7a55d95f426847dcabf7cddc0a3f3271e13a5abac3a413ddc702109c40eda884"
+      },
+      {
+        "path": "src/ledger/balancereader/pom.xml",
+        "sha256": "d4292e7e98c3af0eb6d0469dfe66b698c7f305126b38fd2b354a7adeb75f5e61"
+      },
+      {
+        "path": "src/ledger/ledgerwriter/pom.xml",
+        "sha256": "071aec3a9d964728304dad4c0ba643c98c15165de1b2e22b9e16433c04597e63"
+      },
+      {
+        "path": "src/ledger/transactionhistory/pom.xml",
+        "sha256": "80d3f2170f86f1ae798b2ed89fc241c70f8fcb448db91bf0875ebcf38a85ed73"
+      },
+      {
+        "path": "src/ledgermonolith/pom.xml",
+        "sha256": "1c4776d5ef9af20ed9fd1c618811e84d04ca7a022011de8fa5dd0605d3eae684"
+      },
+      {
+        "path": "src/loadgenerator/pyproject.toml",
+        "sha256": "cb10650d29bb35b97cfb523b5395c101dcb111cd8f9e9ecd32781d888b7f21f2"
+      }
+    ]
+  }
+}
