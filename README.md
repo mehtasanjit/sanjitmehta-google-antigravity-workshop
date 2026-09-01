@@ -45,13 +45,15 @@ The following paths are common starting points, not fixed prescriptions. A works
 - Use [`src/agy/apps/`](src/agy/apps/) for greenfield and brownfield application development.
 - Use [`src/agy/agents/`](src/agy/agents/) for agent development.
 
-Each project contains its requirements and supporting workshop material. Directories whose names end in `-demo` contain pre-created Antigravity workspaces. Copy the relevant `-demo` directory to a new working directory, open the copy as your workspace, and read its `AGENTS.md` before starting. Keeping the original unchanged makes it easy to repeat the workshop or create a workspace for another participant.
+Each project contains its requirements, setup instructions, and supporting workshop material. Current application workshops use project-local scripts that create the next available numbered workspace without overwriting an existing run:
 
-For example, from the repository root:
+| Workshop | Starting point |
+|---|---|
+| [Lecture Pulse](src/agy/apps/lecture-pulse/) | Application-empty greenfield workspace |
+| [Banking Complaint Resolution Workbench](src/agy/apps/banking-complaint-resolution-workbench/) | Application-empty greenfield workspace, with separate brownfield feature material |
+| [Bank of Anthos SDLC](src/agy/apps/bank-of-anthos-sdlc/) | Pinned clone of the official existing application for brownfield development |
 
-```bash
-cp -R src/agy/apps/<project>/<project>-demo <your-workspace>
-```
+Follow the selected project's README and open the generated numbered directory as the workspace. Read its `AGENTS.md` before starting development. A generated application workspace is local workshop output and is not a reusable checked-in template.
 
 Alternatively, initialize a new workspace from the repository's reusable resources:
 
