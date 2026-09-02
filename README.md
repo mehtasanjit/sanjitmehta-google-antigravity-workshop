@@ -45,15 +45,16 @@ The following paths are common starting points, not fixed prescriptions. A works
 - Use [`src/agy/apps/`](src/agy/apps/) for greenfield and brownfield application development.
 - Use [`src/agy/agents/`](src/agy/agents/) for agent development.
 
-Each project contains its requirements, setup instructions, and supporting workshop material. Current application workshops use project-local scripts that create the next available numbered workspace without overwriting an existing run:
+Each project contains its requirements, setup instructions, and supporting workshop material. Some workshops use project-local scripts that create the next available numbered workspace without overwriting an existing run; lightweight labs may begin from their requirements directly:
 
 | Workshop | Starting point |
 |---|---|
+| [Kanban Board Lab](src/agy/apps/kanban-board-lab/) | Traditional greenfield development from a product requirement, without a prescribed harness or plugin |
 | [Lecture Pulse](src/agy/apps/lecture-pulse/) | Application-empty greenfield workspace |
 | [Banking Complaint Resolution Workbench](src/agy/apps/banking-complaint-resolution-workbench/) | Application-empty greenfield workspace, with separate brownfield feature material |
 | [Bank of Anthos SDLC](src/agy/apps/bank-of-anthos-sdlc/) | Pinned clone of the official existing application for brownfield development |
 
-Follow the selected project's README and open the generated numbered directory as the workspace. Read its `AGENTS.md` before starting development. A generated application workspace is local workshop output and is not a reusable checked-in template.
+Follow the selected project's README. When a setup script generates a numbered directory, open that directory as the workspace and read its `AGENTS.md` before development. Generated application workspaces are local workshop output, not reusable checked-in templates.
 
 Alternatively, initialize a new workspace from the repository's reusable resources:
 
