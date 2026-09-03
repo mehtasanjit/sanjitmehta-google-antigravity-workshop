@@ -194,6 +194,28 @@ def test_transition_status(client, db_session):
     assert audit_logs[-1]["from_status"] == "NEW"
     assert audit_logs[-1]["to_status"] == "IN_INVESTIGATION"
 
+    # Transition from IN_INVESTIGATION to UNDER_REVIEW
+    payload_review = {
+        "status": "UNDER_REVIEW",
+        "actor_role": "Case Handler",
+        "actor_name": "Jane Doe",
+        "details": "Submitting findings to supervisor for review."
+    }
+    res_review = client.patch(f"/api/complaints/{c.id}/status", json=payload_review)
+    assert res_review.status_code == 200
+    assert res_review.json()["status"] == "UNDER_REVIEW"
+
+    # Transition from UNDER_REVIEW to APPROVED (supervisor approval)
+    payload_approve = {
+        "status": "APPROVED",
+        "actor_role": "Supervisor",
+        "actor_name": "Sarah Jenkins",
+        "details": "Approved resolution."
+    }
+    res_approve = client.patch(f"/api/complaints/{c.id}/status", json=payload_approve)
+    assert res_approve.status_code == 200
+    assert res_approve.json()["status"] == "APPROVED"
+
     # Transition to RESOLVED and verify resolved_at
     payload_resolve = {
         "status": "RESOLVED",
@@ -205,6 +227,81 @@ def test_transition_status(client, db_session):
     assert res_resolve.status_code == 200
     assert res_resolve.json()["status"] == "RESOLVED"
     assert res_resolve.json()["resolved_at"] is not None
+
+
+def test_invalid_status_transitions(client, db_session):
+    c = models.Complaint(
+        reference_number="CMP-2026-202",
+        customer_name="Bruce Wayne",
+        customer_id="CUST-202",
+        customer_email="bruce@example.com",
+        customer_phone="555-2022",
+        account_number="ACT-202",
+        account_type="Checking",
+        product_type="checking",
+        category="Fraud",
+        priority="HIGH",
+        channel="Online",
+        subject="Unauthorized transfer",
+        narrative="Narrative",
+        disputed_amount=500.0,
+        status="NEW",
+        sla_target_hours=72,
+    )
+    db_session.add(c)
+    db_session.commit()
+    db_session.refresh(c)
+
+    # 1. Illegal jump: NEW directly to RESOLVED
+    res_illegal_resolve = client.patch(
+        f"/api/complaints/{c.id}/status",
+        json={
+            "status": "RESOLVED",
+            "actor_role": "Case Handler",
+            "actor_name": "Jane Doe",
+            "details": "Attempting illegal direct resolve"
+        }
+    )
+    assert res_illegal_resolve.status_code == 400
+    assert "Invalid status transition" in res_illegal_resolve.json()["detail"]
+
+    # 2. Illegal jump: NEW directly to APPROVED
+    res_illegal_approve = client.patch(
+        f"/api/complaints/{c.id}/status",
+        json={
+            "status": "APPROVED",
+            "actor_role": "Case Handler",
+            "actor_name": "Jane Doe",
+            "details": "Attempting illegal direct approval"
+        }
+    )
+    assert res_illegal_approve.status_code == 400
+    assert "Invalid status transition" in res_illegal_approve.json()["detail"]
+
+    # 3. Illegal jump: NEW directly to UNDER_REVIEW
+    res_illegal_review = client.patch(
+        f"/api/complaints/{c.id}/status",
+        json={
+            "status": "UNDER_REVIEW",
+            "actor_role": "Case Handler",
+            "actor_name": "Jane Doe",
+            "details": "Attempting illegal direct review submit"
+        }
+    )
+    assert res_illegal_review.status_code == 400
+    assert "Invalid status transition" in res_illegal_review.json()["detail"]
+
+    # 4. Cannot perform supervisor review on a complaint in NEW status
+    res_review_on_new = client.post(
+        f"/api/complaints/{c.id}/review",
+        json={
+            "review_decision": "APPROVED",
+            "supervisor_name": "Sarah Jenkins",
+            "supervisor_notes": "Premature review"
+        }
+    )
+    assert res_review_on_new.status_code == 400
+    assert "Cannot perform supervisor review" in res_review_on_new.json()["detail"]
 
 
 def test_assign_handler(client, db_session):

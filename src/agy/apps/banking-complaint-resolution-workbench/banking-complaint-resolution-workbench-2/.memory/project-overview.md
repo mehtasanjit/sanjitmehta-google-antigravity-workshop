@@ -4,8 +4,8 @@ description: Foundational goals, technical architecture, role workflows, and env
 metadata:
   node_type: memory
   type: project
-  modified: 2026-09-02T05:22:00Z
-  status: completed
+  modified: 2026-09-02T13:10:00Z
+  status: in_progress_remediations
 ---
 
 # Banking Complaint Resolution Workbench - Project Overview

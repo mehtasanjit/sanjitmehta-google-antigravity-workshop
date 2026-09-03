@@ -9,6 +9,25 @@ from .database import get_db
 
 router = APIRouter(prefix="/api")
 
+VALID_STATUSES = {
+    "NEW",
+    "IN_INVESTIGATION",
+    "UNDER_REVIEW",
+    "APPROVED",
+    "RESOLVED",
+    "ESCALATED",
+}
+
+# Permitted state transition paths across the complaint lifecycle
+ALLOWED_TRANSITIONS: dict[str, set[str]] = {
+    "NEW": {"IN_INVESTIGATION", "ESCALATED"},
+    "IN_INVESTIGATION": {"UNDER_REVIEW", "RESOLVED", "ESCALATED", "NEW"},
+    "UNDER_REVIEW": {"APPROVED", "IN_INVESTIGATION", "ESCALATED"},
+    "APPROVED": {"RESOLVED", "IN_INVESTIGATION", "ESCALATED"},
+    "RESOLVED": {"IN_INVESTIGATION"},  # Reopening for reinvestigation
+    "ESCALATED": {"IN_INVESTIGATION", "UNDER_REVIEW", "RESOLVED"},
+}
+
 
 def generate_reference_number(db: Session) -> str:
     current_year = datetime.datetime.utcnow().year
@@ -159,6 +178,22 @@ def transition_status(
 
     if old_status == new_status:
         return complaint
+
+    if new_status not in VALID_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid status '{new_status}'. Allowed statuses: {sorted(list(VALID_STATUSES))}",
+        )
+
+    allowed_targets = ALLOWED_TRANSITIONS.get(old_status, set())
+    if new_status not in allowed_targets:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Invalid status transition from '{old_status}' to '{new_status}'. "
+                f"Allowed transitions from '{old_status}': {sorted(list(allowed_targets))}"
+            ),
+        )
 
     complaint.status = new_status
     complaint.updated_at = datetime.datetime.utcnow()
@@ -311,6 +346,12 @@ def supervisor_review(
     if not complaint:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found"
+        )
+
+    if complaint.status not in ("UNDER_REVIEW", "ESCALATED"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot perform supervisor review on complaint in '{complaint.status}' status. Must be in 'UNDER_REVIEW' or 'ESCALATED'.",
         )
 
     decision = req.review_decision
