@@ -5,11 +5,11 @@
   - [x] Initialize Python backend directory with FastAPI, Uvicorn, SQLAlchemy, Pydantic, and pytest configuration
   - [x] Configure execution targeting explicit Python binary `/usr/local/google/home/sanjitmehta/work/python/venvs/venv_1/bin/python`
   - [x] Verify test runner runs cleanly with a smoke test
-- [ ] Task: Setup Frontend Project Structure
-  - [ ] Initialize React 18+ TypeScript application with Vite and Tailwind CSS
-  - [ ] Configure Vitest and React Testing Library test harness
-  - [ ] Configure Lucide icons and basic layout shell
-  - [ ] Verify frontend test runner passes with a smoke test
+- [x] Task: Setup Frontend Project Structure [a654deb]
+  - [x] Initialize React 18+ TypeScript application with Vite and Tailwind CSS
+  - [x] Configure Vitest and React Testing Library test harness
+  - [x] Configure Lucide icons and basic layout shell
+  - [x] Verify frontend test runner passes with a smoke test
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Backend API & SQLite Persistence (TDD)
