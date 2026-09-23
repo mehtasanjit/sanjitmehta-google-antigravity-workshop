@@ -1,10 +1,10 @@
 # Implementation Plan: Kanban Board Lab MVP
 
 ## Phase 1: Environment & Project Scaffolding
-- [ ] Task: Setup Backend Project Structure
-  - [ ] Initialize Python backend directory with FastAPI, Uvicorn, SQLAlchemy, Pydantic, and pytest configuration
-  - [ ] Configure execution targeting explicit Python binary `/usr/local/google/home/sanjitmehta/work/python/venvs/venv_1/bin/python`
-  - [ ] Verify test runner runs cleanly with a smoke test
+- [x] Task: Setup Backend Project Structure [e7b8d99]
+  - [x] Initialize Python backend directory with FastAPI, Uvicorn, SQLAlchemy, Pydantic, and pytest configuration
+  - [x] Configure execution targeting explicit Python binary `/usr/local/google/home/sanjitmehta/work/python/venvs/venv_1/bin/python`
+  - [x] Verify test runner runs cleanly with a smoke test
 - [ ] Task: Setup Frontend Project Structure
   - [ ] Initialize React 18+ TypeScript application with Vite and Tailwind CSS
   - [ ] Configure Vitest and React Testing Library test harness
