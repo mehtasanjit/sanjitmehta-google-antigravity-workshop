@@ -67,13 +67,16 @@ In the GE connector's Authentication settings choose **OAuth 2.0** and set:
 |---|---|
 | MCP Server URL | `<URL>/mcp` (from step 3) |
 | Authorization URL | `https://<blackboard>/learn/api/public/v1/oauth2/authorizationcode` |
-| Token URL | `https://<blackboard>/learn/api/public/v1/oauth2/token` |
+| Token URL | `<URL>/oauth2/token` (points to this server's OAuth proxy endpoint) |
 | Client ID / Secret | your Blackboard REST application key / secret |
-| Scopes | e.g. `read` (add `offline` for refresh tokens) |
-| PKCE / HTTP Basic | per what your Blackboard instance supports |
+| Scopes | `read offline` |
+| HTTP Basic Auth | optional (the `/oauth2/token` proxy automatically handles Basic Auth) |
 
-GE then runs the per-user OAuth flow and forwards each user's Blackboard token to
-the server. The Client ID/Secret live in GE — never in this repo.
+> **Why Token URL points to `<URL>/oauth2/token` instead of Blackboard directly:**
+> Blackboard Learn strictly enforces HTTP Basic Auth (`Authorization: Basic <base64>`) on its token endpoint.
+> Due to GE issue b/553520141, Gemini Enterprise passes client credentials in the POST body for custom MCP servers.
+> The `/oauth2/token` endpoint bridges this by receiving GE's parameters, adding the HTTP Basic Auth header, and proxying to Blackboard.
+
 
 ## Re-deploying after changes
 

@@ -8,10 +8,17 @@ permitted for an action simply gets a 4xx, which we surface as a readable error.
 No roles, no per-user state: every request is authenticated independently from
 its own forwarded token, so concurrent users never bleed into each other.
 """
-from typing import Any, Optional
+import base64
+import json
+import logging
+from typing import Any, Dict, Optional
+import urllib.parse
 from urllib.parse import quote
 
+import httpx
 from mcp.server.fastmcp import Context, FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
 try:
     from mcp.server.fastmcp.exceptions import ToolError
@@ -20,6 +27,9 @@ except Exception:  # pragma: no cover - fallback across SDK versions
 
 from . import blackboard, config
 from .blackboard import BlackboardError
+
+logger = logging.getLogger(__name__)
+
 
 mcp = FastMCP(
     "blackboard-mcp-server",
@@ -151,5 +161,84 @@ async def get_course_enrollments(ctx: Context, course_id: str) -> Any:
         return _err(e)
 
 
-# ASGI app for uvicorn / Cloud Run (serves the Streamable HTTP endpoint at /mcp).
+async def oauth2_token_proxy(
+    request: Request, client: Optional[httpx.AsyncClient] = None
+) -> Response:
+    """Proxy POST /oauth2/token to Blackboard Learn.
+
+    Bridges Gemini Enterprise's custom MCP token exchange (which passes client credentials
+    in the request body) with Blackboard Learn (which strictly mandates HTTP Basic Auth).
+    """
+    if not config.BLACKBOARD_BASE_URL:
+        return JSONResponse(
+            {
+                "error": "server_error",
+                "error_description": "BLACKBOARD_BASE_URL is not configured",
+            },
+            status_code=500,
+        )
+
+    content_type = request.headers.get("content-type", "")
+    raw_body = await request.body()
+    body_str = raw_body.decode("utf-8", errors="replace")
+
+    params: Dict[str, Any] = {}
+    if "application/json" in content_type:
+        try:
+            params = json.loads(body_str)
+        except Exception:
+            params = {}
+    else:
+        try:
+            parsed = urllib.parse.parse_qs(body_str, keep_blank_values=True)
+            params = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
+        except Exception:
+            params = {}
+
+    client_id = params.pop("client_id", None)
+    client_secret = params.pop("client_secret", None)
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    incoming_auth = request.headers.get("authorization")
+    if client_id and client_secret:
+        creds = f"{client_id}:{client_secret}"
+        encoded = base64.b64encode(creds.encode("utf-8")).decode("utf-8")
+        headers["Authorization"] = f"Basic {encoded}"
+    elif incoming_auth:
+        headers["Authorization"] = incoming_auth
+
+    target_url = (
+        f"{config.BLACKBOARD_BASE_URL.rstrip('/')}/learn/api/public/v1/oauth2/token"
+    )
+
+    try:
+        if client is not None:
+            resp = await client.post(target_url, data=params, headers=headers)
+        else:
+            async with httpx.AsyncClient(timeout=config.REQUEST_TIMEOUT) as c:
+                resp = await c.post(target_url, data=params, headers=headers)
+
+        return Response(
+            content=resp.content,
+            status_code=resp.status_code,
+            media_type=resp.headers.get("content-type", "application/json"),
+        )
+    except httpx.RequestError as exc:
+        logger.error("Error proxying token request to Blackboard: %s", exc)
+        return JSONResponse(
+            {
+                "error": "bad_gateway",
+                "error_description": f"Failed to contact Blackboard token endpoint: {exc}",
+            },
+            status_code=502,
+        )
+
+
+# ASGI app for uvicorn / Cloud Run (serves Streamable HTTP at /mcp and OAuth token proxy at /oauth2/token).
 app = mcp.streamable_http_app()
+app.add_route("/oauth2/token", oauth2_token_proxy, methods=["POST"])
+
