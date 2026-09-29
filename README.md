@@ -18,8 +18,6 @@ The repository is intended for learning and experimentation. Its examples demons
 
 Developers should read the [AI-Assisted Developer Playbook](docs/agy-common/developer-playbook-greenfield-and-brownfield.md) before beginning a greenfield or brownfield exercise. It provides the recommended Gemini CLI and Antigravity CLI workflow, task-contract templates, approval gates, verification practices, and definitions of done.
 
-For an executive and enterprise view of the market, see the [Agentic Engineering Competitive Landscape](docs/agy-common/competitive-landscape-antigravity-claude-code-codex-cursor.md). It compares Google Antigravity, Claude Code, OpenAI Codex, and Cursor at the platform, agent-harness, developer-workbench, enterprise-control, and JAPAC adoption layers.
-
 ## Repository Overview
 
 The repository is organized into five main areas:
@@ -47,14 +45,26 @@ The following paths are common starting points, not fixed prescriptions. A works
 
 Each project contains its requirements, setup instructions, and supporting workshop material. Some workshops use project-local scripts that create the next available numbered workspace without overwriting an existing run; lightweight labs may begin from their requirements directly:
 
+**Application workshops — [`src/agy/apps/`](src/agy/apps/)**
+
 | Workshop | Starting point |
 |---|---|
 | [Kanban Board Lab](src/agy/apps/kanban-board-lab/) | Traditional greenfield development from a product requirement, without a prescribed harness or plugin |
+| [Kanban Board Lab — Straitjacket](src/agy/apps/kanban-board-lab-straitjacket/) | Greenfield development with Claude Code and Codex under the Straitjacket (`ctx`) context-containment harness |
 | [Lecture Pulse](src/agy/apps/lecture-pulse/) | Application-empty greenfield workspace |
 | [Banking Complaint Resolution Workbench](src/agy/apps/banking-complaint-resolution-workbench/) | Application-empty greenfield workspace, with separate brownfield feature material |
 | [Bank of Anthos SDLC](src/agy/apps/bank-of-anthos-sdlc/) | Pinned clone of the official existing application for brownfield development |
 
 Follow the selected project's README. When a setup script generates a numbered directory, open that directory as the workspace and read its `AGENTS.md` before development. Generated application workspaces are local workshop output, not reusable checked-in templates.
+
+**Agent workshops — [`src/agy/agents/`](src/agy/agents/)**
+
+| Workshop | Starting point |
+|---|---|
+| [ChemLab Research and Preparation Assistant](src/agy/agents/chem-lab-research-and-prep/) | Agent requirements and prompts, with a prepared Antigravity workspace for ADK agent development |
+| [External Campus Academic Assistant](src/agy/agents/external-campus-academic-assistant/) | Agent requirements and prompts, with a prepared Antigravity workspace for ADK agent development |
+
+Agent workshops have no project README: start from the requirements and prompts in their `docs/` directory, then open the prepared `*-work/` directory as the workspace and read its `AGENTS.md`.
 
 Alternatively, initialize a new workspace from the repository's reusable resources:
 
@@ -78,11 +88,14 @@ For specification-driven development, first install the official [Conductor plug
 agy plugins install https://github.com/gemini-cli-extensions/conductor
 ```
 
-If either standard installation is unavailable, use the repository's import scripts as workspace-local fallbacks. The Conductor importer is also useful when Conductor must be stored locally in the workspace, while the Google Agents CLI importer is useful when only its skills—not the CLI itself—are needed:
+If either standard installation is unavailable, use the repository's import scripts as workspace-local fallbacks. The Conductor importer is also useful when Conductor must be stored locally in the workspace, while the Google Agents CLI importer is useful when only its skills—not the CLI itself—are needed.
+
+Set `PYTHON` to the explicit Python 3 interpreter you want to use, such as the binary in your project's virtual environment, then run:
 
 ```bash
-python3 src/scripts/import_conductor_plugin.py <your-workspace>
-python3 src/scripts/import_google_agents_cli_skills.py <your-workspace>
+PYTHON=/path/to/your/.venv/bin/python
+"$PYTHON" src/scripts/import_conductor_plugin.py <your-workspace>
+"$PYTHON" src/scripts/import_google_agents_cli_skills.py <your-workspace>
 ```
 
 The import scripts download content from the official upstream repositories and therefore require network access. Use `--dry-run` to download and validate an import without changing the workspace; existing installations are replaced only when `--force` is supplied.
