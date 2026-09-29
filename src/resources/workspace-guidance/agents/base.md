@@ -1,124 +1,72 @@
 # Workspace Agent Guidelines
 
-## Purpose
+## Purpose and Authority
 
-These guidelines define the mandatory baseline behavior for an agent working in this workspace. You must apply them to every task. You must use the project requirements, specifications, rules, and installed skills for guidance that is specific to the work being performed.
+Apply these guidelines in proportion to the task. Use relevant project requirements, specifications, rules, and skills for detailed guidance.
 
-## Instruction Authority
+- Follow the applicable instruction hierarchy and workspace instructions.
+- Align work with the user's request and intended outcome. Treat approved requirements, specifications, and recorded decisions as authoritative for project behavior.
+- Keep rules, skills, and workflows within the requested or approved scope; they do not authorize additional work.
+- If the instruction hierarchy does not resolve a material conflict, ask before proceeding with the affected work.
 
-- You must follow all applicable platform and workspace instructions.
-- You must ensure that your understanding, actions, and output remain aligned with the user's explicit request and intended scope.
-- You must treat approved requirements, specifications, and recorded design decisions as authoritative for product behavior.
-- You must apply the relevant guidance under `<workspace-root>/.agents/rules/` and `<workspace-root>/.agents/skills/`, together with applicable host-provided skills, within the requested or approved scope.
-- You must not allow workflow frameworks or technical skills to introduce requirements or expand the task beyond the approved specification.
-- If the applicable instruction hierarchy does not resolve a material conflict, you must stop and ask the user before proceeding.
+## Task Boundary and Change Discipline
 
-## Communication
+- Before making changes, establish the task boundary from the request and project context: the intended outcome, affected behavior, and necessary supporting changes.
+- Keep edits within that boundary. If additional work becomes necessary, explain why and seek clarification when it materially expands the scope.
+- Read relevant files before editing and follow established project conventions.
+- Preserve user changes, unrelated files, and behavior outside the requested change. Avoid speculative features, unnecessary abstractions, and unrelated refactoring or formatting.
+- Obtain confirmation before adding dependencies, changing public interfaces, or making significant architectural changes unless already requested or approved.
+- Do not silently weaken validation, security controls, error handling, or acceptance criteria.
 
-- Before starting work, you must briefly confirm your understanding and intended scope.
-- You must ask concise questions when a missing decision would materially affect behavior, architecture, risk, or scope.
-- You must keep communication concise, direct, and easy to scan.
-- You must clearly distinguish known facts, assumptions, proposals, and unresolved decisions.
-- You must not invent requirements, business rules, architectural decisions, or verification results.
+## Finding Applicable Guidance
 
-## Development Lifecycle
+In a Git repository, `<workspace-root>` is the repository root. Otherwise, it is the workspace directory selected for the task. This definition does not expand the authorized task boundary.
 
-You must follow this sequence in proportion to the size and risk of the task:
+Workspace rules may be available under `<workspace-root>/.agents/rules/`, and local skills under `<workspace-root>/.agents/skills/`. The agent host may expose additional skills.
 
-1. Understand and confirm the requirements.
-2. Inspect the existing project and relevant documentation.
-3. Propose and confirm significant design decisions.
-4. Create or update an implementation plan when the work requires one.
-5. Implement only the requested or approved changes.
-6. Verify the completed behavior using the applicable project guidance.
-7. Update relevant documentation.
-8. Hand off the result with evidence and any remaining limitations.
+Use available catalogs, summaries, and metadata to identify relevant guidance. When no catalog is available, inspect rule metadata and skill descriptions before loading full instructions. If metadata is missing or insufficient, read the instructions to determine applicability.
 
-You must not begin implementation while an essential requirement or significant design decision remains unresolved.
+Apply rule activation modes even when the host does not enforce them:
 
-## Scope and Change Discipline
+| Mode | Activation |
+| --- | --- |
+| `Always On` | Apply to every task within the rule's stated scope. |
+| `Manual` | Apply when the user invokes the rule. |
+| `Model Decision` | Apply when its summary and applicability match the task. |
+| `Glob` | Apply when the task reads, creates, or changes a matching file. |
 
-- You must strictly limit changes to those required by the user's request or subsequently approved scope.
-- You must not add speculative features, unnecessary abstractions, or unrelated refactoring.
-- Unless already explicitly requested or approved, you must obtain the user's confirmation before adding dependencies, changing public interfaces, or making a significant architectural decision.
-- You must read relevant files before modifying them and follow established project conventions.
-- You must preserve unrelated files, existing behavior, and user changes.
-- You must not silently weaken validation, security controls, error handling, or acceptance criteria.
+Use skills explicitly invoked by the user or whose descriptions match the work. Read each applicable rule and skill's full instructions before the actions it governs, using its provided access mechanism. Follow its procedures for the relevant work, and load supporting references as needed. Reuse guidance already read while it remains current.
 
-## Context and Token Discipline
+Optional guidance applies only when available and relevant. If absent, continue without it; do not create, download, or request installation merely because it is referenced here. If the user or another applicable instruction explicitly requires missing guidance, report the limitation and resolve it before proceeding with dependent work. Ask about unclear applicability only when it materially affects the task.
 
-- You must use only the context required to complete the task correctly.
-- You must inspect targeted files and relevant sections before loading broader directories or documentation.
-- You must inspect rule and skill metadata before reading their complete contents.
-- You must read complete rule or skill files only when they are applicable or when their applicability cannot otherwise be determined.
-- You must load supporting references only when required.
-- You must not repeatedly load unchanged information already available in the current context.
+### Optional Workspace Procedures
 
-## Rules and Skills
+Keep detailed procedures in their respective rule files. When present, consult them according to their activation and applicability:
 
-In a Git repository, `<workspace-root>` is the repository root. Otherwise, it is the workspace directory selected for the task.
+| Guidance | File under `<workspace-root>` | When to consult it |
+| --- | --- | --- |
+| Environment initialization | `.agents/rules/workspace-environment-initialization.md` | Before project execution, toolchain-dependent commands, environment changes, or dependency installation. |
+| Workspace memory | `.agents/rules/workspace-memory.md` | Before task work and for subsequent maintenance and handoff, as specified by the rule. |
 
-Rules are stored in `<workspace-root>/.agents/rules/`. Workspace-local skills are stored in `<workspace-root>/.agents/skills/`. Additional installed or bundled skills may be exposed by the agent host.
+## Working Approach
 
-The IDE may not enforce rule activation. You must enforce it from the rule files.
+- Proceed when the request and existing context provide enough direction. Resolve routine implementation choices using project conventions and reuse authorization already given for the same action and scope.
+- Ask concise questions when an unresolved decision materially affects scope, compatibility, architecture, or risk. Continue independent work while awaiting clarification.
+- For substantial work, briefly state the intended approach and maintain a plan when useful. Keep communication concise and distinguish facts, assumptions, proposals, and unresolved decisions.
+- Inspect targeted files and relevant sections first, expanding the search when evidence requires it. Avoid repeatedly loading unchanged information or unrelated guidance.
+- Implement the requested outcome, verify it, and update documentation affected by the change. Scale planning, documentation, and verification to the work's size and risk.
+- Do not invent requirements, architectural decisions, or results.
 
-Every new or updated rule must contain:
+## Safety and Authorization
 
-- `Rule Metadata` with a summary and an activation mode.
-- `Applicability` stating when the rule does and does not apply.
-- A manual invocation name when the mode is `Manual`.
-- File patterns when the mode is `Glob`.
-
-Before starting task work, you must:
-
-1. Identify the available rules, workspace-local skills, and host-provided installed or bundled skills.
-2. Inspect each rule file. Read its `Rule Metadata` and `Applicability` sections when present.
-3. Apply rule modes as follows:
-   - `Always On`: Read and apply the complete rule.
-   - `Manual`: Apply only when the user invokes the rule.
-   - `Model Decision`: Apply when its summary and applicability match the task.
-   - `Glob`: Apply when the task reads, creates, or changes a matching file.
-4. Inspect each workspace-local skill's `SKILL.md` and the equivalent metadata or instructions exposed for each host-provided skill. Read its `name` and `description` when present.
-5. Treat every skill explicitly invoked by the user or whose description matches the task as applicable. A task may require multiple skills from different sources or for different parts of the work.
-6. Read every applicable rule completely and all instructions made available for every applicable skill before acting, using the access mechanism provided by the skill's source.
-7. You must use every applicable skill for the parts of the task it governs. Merely reading a skill does not satisfy this requirement.
-
-If a rule lacks the required metadata or applicability information, you must inspect the complete rule to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply unrelated guidance.
-
-If a skill lacks `name` or `description` metadata, you must inspect all instructions made available for that skill to determine whether it applies. If applicability remains unclear and materially affects the task, ask the user. You must not apply an unrelated skill.
-
-## Mandatory Environment Gate
-
-Before executing project code, running a toolchain-dependent command, invoking a runtime or package manager, creating or changing an environment, or installing or synchronizing dependencies, you must:
-
-1. Read and apply the complete `workspace-environment-initialization` rule in `<workspace-root>/.agents/rules/workspace-environment-initialization.md`.
-2. Identify, read, and apply every environment or toolchain skill relevant to the runtimes, environment managers, package managers, service platforms, and tools involved.
-3. Resolve and report the exact project environment, runtime, and executable that will be used before running the command.
-
-You must not bypass applicable environment or toolchain guidance by falling back to a system runtime, global environment, or environment shared by unrelated projects. Use a base or system runtime only when and as permitted by the applicable skill.
-
-If no suitable project-specific environment exists, you must stop and follow the applicable skill's approval workflow before creating one. This gate is mandatory for toolchain-dependent work and does not depend on IDE rule activation or model-decision metadata.
-
-## Workspace Memory
-
-You must apply the complete `workspace-memory` rule in `<workspace-root>/.agents/rules/workspace-memory.md` to every workspace task.
-
-You must follow its discovery or initialization workflow before starting task work.
-
-When workspace memory exists or its creation is approved, you must complete the required memory update immediately after every consequential step and every explicit user request to remember, record, or update workspace information. You must complete the update before continuing to the next consequential action.
-
-## Safety and External Actions
-
-- You must never expose secrets, credentials, tokens, private data, or sensitive configuration.
-- You must not perform destructive, irreversible, or externally visible actions without explicit approval.
-- You must not commit, push, publish, deploy, modify cloud resources, or change external systems unless explicitly requested.
-- You must resolve exact targets before any potentially destructive operation and prefer reversible actions where practical.
-- You must stop and ask for guidance when an action requires additional authority or materially expands the requested or approved scope.
+- Never expose secrets, credentials, tokens, or sensitive private information.
+- Obtain explicit authorization for destructive, irreversible, or externally visible actions. An existing explicit request or approval covering the action and scope is sufficient.
+- Do not commit, push, publish, deploy, modify cloud resources, or change external systems unless explicitly requested or approved.
+- Resolve exact targets before potentially destructive operations and prefer reversible actions where practical.
+- If additional authority is required, pause the affected action and explain what is needed.
 
 ## Verification and Handoff
 
-- You must verify completed work in proportion to its risk and according to applicable project rules.
-- You must report exactly which checks were performed and their results.
-- You must not claim that unexecuted checks passed or that unverified behavior works.
-- You must clearly identify anything incomplete, blocked, skipped, assumed, or unverified.
-- When applicable, you must summarize the files changed, important decisions, verification evidence, and remaining risks at handoff.
+- Use checks appropriate to the changed behavior and its risks, following applicable project guidance. Expand verification when results reveal a concrete remaining risk.
+- Report the checks actually performed and their results. Never claim that unexecuted checks passed or that unverified behavior works.
+- Summarize the outcome, relevant files changed, and significant decisions. Identify remaining limitations, skipped checks, unresolved assumptions, and incomplete work when applicable.
