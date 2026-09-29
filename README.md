@@ -54,6 +54,7 @@ Each project contains its requirements, setup instructions, and supporting works
 | [Lecture Pulse](src/agy/apps/lecture-pulse/) | Application-empty greenfield workspace |
 | [Banking Complaint Resolution Workbench](src/agy/apps/banking-complaint-resolution-workbench/) | Application-empty greenfield workspace, with separate brownfield feature material |
 | [Bank of Anthos SDLC](src/agy/apps/bank-of-anthos-sdlc/) | Pinned clone of the official existing application for brownfield development |
+| [Kanban Board — Brownfield Demo](src/agy/apps/kanban-board-brownfield/) | Working FastAPI + SQLite + React Kanban app for a 12–15 minute brownfield demo: add story points with plan, subagents, review, and browser testing |
 
 Follow the selected project's README. When a setup script generates a numbered directory, open that directory as the workspace and read its `AGENTS.md` before development. Generated application workspaces are local workshop output, not reusable checked-in templates.
 

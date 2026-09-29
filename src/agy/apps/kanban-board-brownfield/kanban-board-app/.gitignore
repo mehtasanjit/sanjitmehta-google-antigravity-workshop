@@ -1,0 +1,8 @@
+# Local data and build output
+backend/data/
+frontend/dist/
+frontend/node_modules/
+
+# Python caches
+__pycache__/
+.pytest_cache/
