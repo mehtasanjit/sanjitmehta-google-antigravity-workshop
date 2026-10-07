@@ -14,10 +14,15 @@ ${source_name}-1. The copy contains:
     local database, or caches), committed as a Git baseline
   - AGENTS.md, copied from src/resources/workspace-guidance/agents/base.md
   - .agents/rules/workspace-memory.md, copied from the workspace memory rule
+  - .agents/plugins/conductor/, the Conductor plugin downloaded at setup
 
 Options:
   --dry-run  Print the directory that would be created without changing files.
   -h, --help Show this help.
+
+Optional environment variables:
+  CONDUCTOR_REF  gemini-cli-extensions/conductor commit on main (default: main);
+                 release tags lack plugin.json and do not work
 EOF
 }
 
@@ -41,12 +46,14 @@ fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd -- "$script_dir/../../../.." && pwd)"
-app_source="$script_dir/$source_name"
+app_source="$script_dir/../kanban-board-brownfield/$source_name"
 guidance_root="$repository_root/src/resources/workspace-guidance"
 agents_md_source="$guidance_root/agents/base.md"
 memory_rule_source="$guidance_root/rules/workspace-memory.md"
+conductor_importer="$repository_root/src/scripts/import_conductor_plugin.py"
+conductor_ref="${CONDUCTOR_REF:-main}"
 
-for required_path in "$app_source" "$agents_md_source" "$memory_rule_source"; do
+for required_path in "$app_source" "$agents_md_source" "$memory_rule_source" "$conductor_importer"; do
   if [[ ! -e "$required_path" ]]; then
     printf 'Required setup resource is missing: %s\n' "$required_path" >&2
     exit 1
@@ -67,6 +74,10 @@ fi
 
 if ! command -v git >/dev/null 2>&1; then
   printf 'git is required to record the baseline.\n' >&2
+  exit 1
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+  printf 'python3 is required to import the Conductor plugin.\n' >&2
   exit 1
 fi
 
@@ -129,10 +140,12 @@ git -C "$target_root" -c user.name='Workshop setup' -c user.email='setup@localho
 cp -- "$agents_md_source" "$target_root/AGENTS.md"
 mkdir -p -- "$target_root/.agents/rules"
 cp -- "$memory_rule_source" "$target_root/.agents/rules/workspace-memory.md"
+python3 "$conductor_importer" "$target_root" --ref "$conductor_ref"
 
 required_paths=(
   "$target_root/AGENTS.md"
   "$target_root/.agents/rules/workspace-memory.md"
+  "$target_root/.agents/plugins/conductor/plugin.json"
   "$target_root/backend/app/service.py"
   "$target_root/frontend/package.json"
   "$target_root/docs/spec.md"
@@ -154,5 +167,5 @@ fi
 setup_complete=true
 trap - EXIT HUP INT TERM
 
-printf 'Created Kanban Board Brownfield workspace: %s\n' "$target_root"
+printf 'Created Kanban Board Brownfield Conductor workspace: %s\n' "$target_root"
 printf 'Next: install dependencies (see README.md), then open it as the workspace.\n'

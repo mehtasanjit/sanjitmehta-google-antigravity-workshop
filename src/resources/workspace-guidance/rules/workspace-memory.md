@@ -2,70 +2,48 @@
 
 ## Rule Metadata
 
-- **Summary:** Discover, read, create, and continuously maintain indexed workspace memory in `.memory/`.
+- **Summary:** Read and maintain indexed workspace memory in `.memory/`.
 - **Activation Mode:** Always On
 
 ## Applicability
 
-You must apply this rule to every task performed in a workspace.
+Apply this rule to every task. `<workspace-root>` is the folder that contains the `.agents/` folder holding this rule; if that cannot be determined, use the folder the host opened as the workspace, and if that is still ambiguous, ask.
 
-This rule does not require memory to be created when the user declines it. Do not store temporary notes, conversation transcripts, secrets, credentials, personal data, or information unrelated to the workspace.
+Never store temporary notes, conversation transcripts, secrets, credentials, personal data, or information unrelated to the workspace.
 
-## Workflow
+## Read memory
 
-### Step 1: Inspect workspace memory
+- If `<workspace-root>/.memory/` exists, read `MEMORY.md`, then only the memory files relevant to the task.
+- If `MEMORY.md` is missing, rebuild it from the memory files' names and frontmatter before updating memory.
+- Add missing frontmatter to an existing memory file when you next update it; don't create a duplicate for it.
 
-1. Resolve `<workspace-root>` as defined by the base workspace guidance.
-2. Inspect `<workspace-root>/.memory/`.
-3. If `.memory/` exists, read `.memory/MEMORY.md` first.
-4. Use the index descriptions to identify memories relevant to the current task.
-5. Read only the relevant memory files.
-6. Do not load every memory file by default.
-
-If `.memory/` exists without `MEMORY.md`, inspect the available memory-file names and frontmatter, then create or repair the index before making further memory updates.
-
-If an existing memory file lacks the required frontmatter, add it when that file is next updated. Do not create a duplicate file merely to apply the current format.
-
-### Step 2: Resolve memory creation and Git visibility
+## Create memory
 
 If `.memory/` does not exist, ask:
 
 > No workspace memory exists. Should I create `.memory/`?
 
-If the user declines, proceed without workspace memory and do not repeat the question during the same task.
+If the user declines, proceed without memory and don't ask again this session. If they approve and the workspace is inside a Git repository, ask:
 
-If the user approves creation:
+> Should workspace memory remain private, or be available to commit to the repository for the team?
 
-1. Determine whether the workspace is a Git repository.
-2. If it is not a Git repository, create `<workspace-root>/.memory/` without asking about Git visibility.
-3. If it is a Git repository, ask:
+- **Private:** create `<workspace-root>/.memory/`. If Git does not already ignore it, list `/.memory/` in `<workspace-root>/.gitignore`.
+- **Repository-shared, or not inside a Git repository:** create `<workspace-root>/.memory/` without changing `.gitignore`.
 
-   > Should workspace memory remain private, or be available to commit to the repository for the team?
+At creation, write only `MEMORY.md`. Creating repository-shared memory does not authorise a commit.
 
-4. Apply the answer as follows:
-   - **Private:** Create `<workspace-root>/.memory/` and ensure `/.memory/` is listed in the root `.gitignore`.
-   - **Repository-shared:** Create `<workspace-root>/.memory/` and do not add it to `.gitignore`.
+If a `.memory/` folder already exists and the project uses Git, find out whether the memory is private or shared. Don't change anything while you check.
 
-Creating repository-shared memory does not authorize a Git commit.
+- If the folder has been committed to Git, the memory is shared with the team.
+- If the folder has not been committed and `.gitignore` lists it, the memory is private.
+- If the folder has not been committed and `.gitignore` does not list it, ask the user whether they want it private or shared.
+- Ask the user before you change `.gitignore` or remove the folder from Git.
 
-If `.memory/` already exists in a Git repository, determine its current Git visibility using non-mutating checks:
+Keep an existing, clear visibility choice unless the user asks to change it. Private memory may hold user- or machine-specific workspace facts. Repository-shared memory holds only what suits the whole team and repository history: no personal preferences, machine-specific values, or session identifiers. Neither holds secrets or personal data.
 
-- If it is tracked, treat it as repository-shared.
-- If it is ignored and untracked, treat it as private.
-- If it is neither tracked nor ignored, ask whether it should be private or repository-shared. Add `/.memory/` to the root `.gitignore` only when the user chooses private.
-- If it is tracked and also matches an ignore rule, explain that `.gitignore` does not untrack existing files and ask whether to keep it repository-shared or make it private. Obtain explicit approval before changing Git tracking.
+## Format
 
-Preserve an existing, unambiguous Git-visibility choice unless the user requests a change.
-
-Private memory may contain user- or machine-specific workspace facts, but never secrets or personal data. Repository-shared memory must contain only information suitable for the entire team and repository history; it must not contain personal preferences, machine-specific values, or session identifiers.
-
-### Step 3: Initialize the memory index
-
-Create only `.memory/MEMORY.md` during initialization.
-
-`MEMORY.md` is the only reserved memory filename and does not require frontmatter.
-
-Use this structure:
+`MEMORY.md` is the index and has no frontmatter. One entry per memory file, using that file's description, with a relative link and no further detail:
 
 ```md
 # Memory Index
@@ -73,21 +51,7 @@ Use this structure:
 - [Memory title](memory-name.md) — concise description of when this memory is relevant
 ```
 
-You must:
-
-1. Keep `MEMORY.md` concise.
-2. Include one entry for every subject-specific memory file.
-3. Use each memory file's description in its index entry.
-4. Link to memory files using relative paths.
-5. Never duplicate detailed memory content in the index.
-
-Do not create empty category files during initialization.
-
-### Step 4: Create subject-specific memory files
-
-Create a new memory file only when durable information represents a distinct subject and no existing memory file covers it.
-
-Use a stable lowercase kebab-case filename and require this frontmatter:
+Each memory file covers one subject, has a stable lowercase kebab-case filename, and starts with:
 
 ```yaml
 ---
@@ -100,60 +64,25 @@ metadata:
 ---
 ```
 
-You must:
+`name` matches the filename without `.md`; `modified` is an RFC 3339 timestamp, updated on every meaningful change. Optional metadata: `status`, `related`, `sources`, and `originSessionId` (private memory only). Keep the body concise and factual.
 
-1. Make `name` match the filename without `.md`.
-2. Keep `description` concise and specific enough to support relevance decisions.
-3. Set `metadata.node_type` to `memory`.
-4. Set `metadata.type` to `project`.
-5. Set `metadata.modified` to the current RFC 3339 timestamp whenever the file changes consequentially.
-6. Keep one coherent memory subject per file.
-7. Add the file to `MEMORY.md` immediately after creating it.
+## Use memory
 
-The body format may follow the needs of the subject. Keep it concise, factual, and easy to update.
+Memory is recall, not authority. Use it to avoid repeating discovery and settled decisions, and link to authoritative sources instead of copying them. When memory conflicts with an authoritative source, follow the source and correct the memory; ask if the workspace cannot resolve the conflict.
 
-Optional metadata may include `status`, `related`, `sources`, and `originSessionId`. Use `originSessionId` only in private memory. Do not require optional metadata when it provides no value.
+## Update memory
 
-### Step 5: Use memory
+Update memory immediately after each consequential step, before the next one. A step is consequential when it produces something a later session needs, such as:
 
-Memory is a recall and continuity layer. It must not replace authoritative workspace information.
+- a request to remember something, or a correction, preference, or rejection that affects future work;
+- an approved requirement, decision, or change of direction;
+- a durable discovery, constraint, convention, known issue, failed approach, or verified command;
+- a material change to files, behaviour, architecture, dependencies, environment, or external shared state;
+- a verification result that confirms behaviour, exposes a limitation, or invalidates an assumption;
+- a blocker, unresolved issue, or completed milestone.
 
-1. Use relevant memory to avoid repeating workspace discovery and settled decisions.
-2. Link to authoritative workspace sources instead of copying their contents into memory.
-3. When memory conflicts with an authoritative source, follow that source and correct the memory.
-4. Ask the user when a conflict cannot be resolved from the workspace.
-
-### Step 6: Maintain memory continuously
-
-When workspace memory exists or the user approves its creation, you must update it immediately after every consequential step and before continuing to the next consequential action.
-
-A consequential step includes:
-
-- An explicit user request to remember, record, or update workspace information.
-- A user correction, clarification, confirmed preference, or rejection that affects future work.
-- An approved requirement, decision, or change in direction.
-- A durable discovery, constraint, convention, known issue, failed approach, or verified command.
-- A material change to workspace files, behavior, architecture, dependencies, environment, or external shared state.
-- A verification result that confirms behavior, exposes a limitation, or invalidates an assumption.
-- A blocker, unresolved issue, completed milestone, or change to the next required action.
-- Any other durable fact or state change that a later session would need to continue safely or avoid repeating work.
-
-After each consequential step, you must:
-
-1. Identify the existing memory file for that subject.
-2. Update that file and its `metadata.modified` timestamp.
-3. Create a new memory file only when no existing file covers the subject.
-4. Update `MEMORY.md` only when its file index or an indexed description changes.
-5. Complete the memory update before beginning the next consequential action.
-
-You must not create a new file for every step, append duplicate entries, or defer all memory updates until final handoff.
-
-You must correct or supersede obsolete information, record decisions only after they are approved or established, and avoid transient details that can be recovered easily from the repository.
+Update the existing file for that subject and its `modified` timestamp; create a new file only when no file covers the subject; update `MEMORY.md` only when the index changes. Correct or replace obsolete entries. Don't append duplicates, record decisions before they are approved, or store details easily recovered from the repository.
 
 ## Handoff
 
-When memory was created or materially changed, report:
-
-- The memory files created or updated.
-- Whether `.memory/` is private or repository-shared.
-- Any unresolved conflict, stale entry, or Git-tracking limitation.
+When memory was created or changed, report the files created or updated, whether memory is private or repository-shared, and any unresolved conflict, stale entry, or Git-tracking limitation.

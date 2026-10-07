@@ -27,8 +27,8 @@ The repository is organized into five main areas:
 | [`src/agy/agents/`](src/agy/agents/) | Agent-development workshops, requirements, prompts, and prepared Antigravity workspaces. |
 | [`src/agy/apps/`](src/agy/apps/) | Greenfield and brownfield application-development workshops. |
 | [`src/geap/`](src/geap/) | Runnable Gemini Enterprise, ADK, MCP, authentication, and external-system integration examples. |
-| [`src/resources/`](src/resources/) | Reusable `AGENTS.md` guidance, rules, skills, plugins, and software-development subagents for initializing workspaces. |
-| [`src/scripts/`](src/scripts/) | Scripts for seeding workspaces and importing supported skills and plugins. |
+| [`src/resources/`](src/resources/) | The shared workspace guidance (`AGENTS.md`, rules, skills) and the eight software-development subagents that setup scripts copy into workspaces. |
+| [`src/scripts/`](src/scripts/) | The Conductor importer used by the setup scripts, plus scripts for seeding a workspace and importing Google Agents CLI skills by hand. |
 
 These areas support three related workshop activities:
 
@@ -43,20 +43,53 @@ The following paths are common starting points, not fixed prescriptions. A works
 - Use [`src/agy/apps/`](src/agy/apps/) for greenfield and brownfield application development.
 - Use [`src/agy/agents/`](src/agy/agents/) for agent development.
 
-Each project contains its requirements, setup instructions, and supporting workshop material. Some workshops use project-local scripts that create the next available numbered workspace without overwriting an existing run; lightweight labs may begin from their requirements directly:
+### How the application workshops are organised
+
+Every application exercise comes in up to three variants. The variants share the same requirements and differ only in the tooling placed in the workspace, so a workshop can compare how much each layer helps:
+
+| Variant | Folder suffix | What each workspace gets |
+|---|---|---|
+| Vanilla | *(none)* | `AGENTS.md` and the workspace memory rule |
+| Conductor | `-conductor` | The above, plus the [Conductor plugin](https://github.com/gemini-cli-extensions/conductor) for specification-driven development |
+| Conductor and Subagents | `-conductor-subagents` | The above, plus the eight SDLC subagents |
+
+All variants copy the same files from [`src/resources/`](src/resources/):
+
+| Workspace file | Source |
+|---|---|
+| `AGENTS.md` | [`workspace-guidance/agents/base.md`](src/resources/workspace-guidance/agents/base.md) |
+| `.agents/rules/workspace-memory.md` | [`workspace-guidance/rules/workspace-memory.md`](src/resources/workspace-guidance/rules/workspace-memory.md) |
+| `.agents/agents/` | [`subagents/sdlc-subagents/.agents/agents/`](src/resources/subagents/sdlc-subagents/.agents/agents/) |
+| `.agents/plugins/conductor/` | Downloaded from Conductor's `main` branch at setup by [`src/scripts/import_conductor_plugin.py`](src/scripts/import_conductor_plugin.py) |
+
+Editing a file in `src/resources/` changes every workspace created afterwards; existing workspaces keep the copy they were created with. Prompts that rely on Conductor are shipped only in the Conductor variants; vanilla variants give the agent the requirements directly.
+
+### Setup scripts
+
+Each application folder has a `setup-workspace.sh`:
+
+- It creates the next numbered workspace (`<folder>-1`, `<folder>-2`, …) next to the script and never overwrites an existing one. `--dry-run` shows the next name without creating anything. The empty workspaces also accept a name: `./setup-workspace.sh my-project`.
+- If setup fails, it removes only the workspace it was creating.
+- Generated workspaces are local workshop output. Brownfield folders include a `.gitignore` so their nested Git repositories stay out of this repository.
+- Variants with Conductor need Python 3 and network access. To pin Conductor, set `CONDUCTOR_REF` to a commit on its `main` branch; its release tags use an older layout without `plugin.json` and do not work.
+- Brownfield workspaces are Git repositories with a clean baseline, so `git diff` shows exactly what the agent changed. Workspace files (`AGENTS.md`, `.agents/`, `.memory/`, `.scratch/`) are excluded through `.git/info/exclude` and never appear in the application diff.
+
+After setup, open the generated directory, not the repository root, as the Antigravity workspace.
 
 **Application workshops — [`src/agy/apps/`](src/agy/apps/)**
 
-| Workshop | Starting point |
-|---|---|
-| [Kanban Board Lab](src/agy/apps/kanban-board-lab/) | Traditional greenfield development from a product requirement, without a prescribed harness or plugin |
-| [Kanban Board Lab — Straitjacket](src/agy/apps/kanban-board-lab-straitjacket/) | Greenfield development with Claude Code and Codex under the Straitjacket (`ctx`) context-containment harness |
-| [Lecture Pulse](src/agy/apps/lecture-pulse/) | Application-empty greenfield workspace |
-| [Banking Complaint Resolution Workbench](src/agy/apps/banking-complaint-resolution-workbench/) | Application-empty greenfield workspace, with separate brownfield feature material |
-| [Bank of Anthos SDLC](src/agy/apps/bank-of-anthos-sdlc/) | Pinned clone of the official existing application for brownfield development |
-| [Kanban Board — Brownfield Demo](src/agy/apps/kanban-board-brownfield/) | Working FastAPI + SQLite + React Kanban app for a 12–15 minute brownfield demo: add story points with plan, subagents, review, and browser testing |
+| Exercise | Type | Vanilla | Conductor | Conductor and Subagents |
+|---|---|---|---|---|
+| Lecture Pulse | Greenfield | [lecture-pulse](src/agy/apps/lecture-pulse/) | [lecture-pulse-conductor](src/agy/apps/lecture-pulse-conductor/) | [lecture-pulse-conductor-subagents](src/agy/apps/lecture-pulse-conductor-subagents/) |
+| Kanban Board | Greenfield | [kanban-board](src/agy/apps/kanban-board/) | [kanban-board-conductor](src/agy/apps/kanban-board-conductor/) | [kanban-board-conductor-subagents](src/agy/apps/kanban-board-conductor-subagents/) |
+| Bank Complaints Workbench | Greenfield, with a brownfield SLA Control Tower follow-up | [bank-complaints-workbench](src/agy/apps/bank-complaints-workbench/) | [bank-complaints-workbench-conductor](src/agy/apps/bank-complaints-workbench-conductor/) | [bank-complaints-workbench-conductor-subagents](src/agy/apps/bank-complaints-workbench-conductor-subagents/) |
+| Empty Workspace | Any project; bring your own brief | [empty-workspace](src/agy/apps/empty-workspace/) | [empty-workspace-conductor](src/agy/apps/empty-workspace-conductor/) | [empty-workspace-conductor-subagents](src/agy/apps/empty-workspace-conductor-subagents/) |
+| Kanban Board brownfield demo | Brownfield: copy of a working FastAPI + SQLite + React app; add story points in 12–15 minutes | [kanban-board-brownfield](src/agy/apps/kanban-board-brownfield/) | [kanban-board-brownfield-conductor](src/agy/apps/kanban-board-brownfield-conductor/) | [kanban-board-brownfield-conductor-subagents](src/agy/apps/kanban-board-brownfield-conductor-subagents/) |
+| Bank of Anthos | Brownfield: pinned clone of the [Bank of Anthos fork](https://github.com/mehtasanjit/bank-of-anthos); add transaction search and CSV export | [bank-of-anthos](src/agy/apps/bank-of-anthos/) | [bank-of-anthos-conductor](src/agy/apps/bank-of-anthos-conductor/) | [bank-of-anthos-conductor-subagents](src/agy/apps/bank-of-anthos-conductor-subagents/) |
 
-Follow the selected project's README. When a setup script generates a numbered directory, open that directory as the workspace and read its `AGENTS.md` before development. Generated application workspaces are local workshop output, not reusable checked-in templates.
+[Kanban Board — Straitjacket](src/agy/apps/kanban-board-straitjacket/) is a separate greenfield exercise for Claude Code and Codex under the Straitjacket (`ctx`) context-containment harness. It has no setup script; start from its requirements.
+
+Follow the selected folder's README for prerequisites and the step-by-step exercise.
 
 **Agent workshops — [`src/agy/agents/`](src/agy/agents/)**
 
@@ -67,13 +100,11 @@ Follow the selected project's README. When a setup script generates a numbered d
 
 Agent workshops have no project README: start from the requirements and prompts in their `docs/` directory, then open the prepared `*-work/` directory as the workspace and read its `AGENTS.md`.
 
-Alternatively, initialize a new workspace from the repository's reusable resources:
+To initialize a workspace by hand instead, the seed script copies the full guidance set: `AGENTS.md`, both rules (memory and environment initialization), both guidance skills, and the eight subagents. The application setup scripts do not use it; they copy only the files listed above. It does not overwrite existing destination files.
 
 ```bash
 ./src/scripts/seed-workspace.sh <your-workspace>
 ```
-
-The seed script adds the baseline `AGENTS.md`, rules, skills, and reusable software-development subagents. It does not overwrite existing destination files.
 
 ### Install optional development tooling
 

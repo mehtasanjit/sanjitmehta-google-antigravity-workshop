@@ -30,7 +30,7 @@ Determine only:
 
 1. Operating system.
 2. Active shell.
-3. Workspace root.
+3. Workspace root (`<workspace-root>`): the folder that contains the `.agents/` folder holding this rule. If that cannot be determined, use the folder the host opened as the workspace; if that is still ambiguous, ask.
 4. Current working directory.
 
 If the user provides the details, record them without running discovery commands. If the user authorizes automated discovery, use non-mutating checks appropriate for the host. Reuse that authorization for the same discovery scope; ask again only when the scope expands.
@@ -48,7 +48,7 @@ If additional environment details required for the current task remain unknown, 
 ### Step 4: Apply the relevant environment and toolchain skills
 
 1. Identify every language runtime, environment manager, package manager, service platform, and toolchain required by the task.
-2. Use the available skills identified by the base workspace workflow, including workspace-local skills and installed or bundled skills exposed by the agent host.
+2. Use the available skills: workspace-local skills in `<workspace-root>/.agents/skills/` and installed or bundled skills exposed by the agent host.
 3. Match each skill's name, description, and exposed applicability guidance to the user request, project configuration, and required toolchains.
 4. Apply every matching skill for the part of the task it governs. You must not select only one skill when multiple skills apply.
 5. Each applicable skill governs the toolchain-specific work described by its instructions. You must not repeat equivalent generic steps in this rule. Reuse its findings and approvals for the same action and scope, and include its required report in the consolidated report in Step 8 instead of reporting it separately.

@@ -487,7 +487,7 @@ Use the following structure to describe every workshop or enterprise use case.
 - **Evidence:** Impact assessment, plan, diff, test results, browser walkthrough.
 - **Risk boundary:** Synthetic data; no production identity integration or deployment.
 - **Representative codelab:** [Plan and Build Apps with Conductor](https://codelabs.developers.google.com/conductor-plugin?hl=en).
-- **Workshop demonstration:** Banking Complaint Resolution Workbench.
+- **Workshop demonstration:** Bank Complaints Workbench.
 
 ### Audit a multi-language banking platform
 
@@ -516,7 +516,7 @@ Use the following structure to describe every workshop or enterprise use case.
 - **Evidence:** Agent specification, evaluation dataset, metric results, trace examples, security review.
 - **Risk boundary:** The agent drafts a summary only; bank staff retain all complaint and customer decisions.
 - **Representative codelab:** [Spec-Driven ADK Agent Development](https://codelabs.developers.google.com/sdd-adk-antigravity?hl=en).
-- **Workshop demonstration:** A later agent-engineering extension to the Banking Complaint Resolution Workbench.
+- **Workshop demonstration:** A later agent-engineering extension to the Bank Complaints Workbench.
 
 ## Codelab-to-task map
 

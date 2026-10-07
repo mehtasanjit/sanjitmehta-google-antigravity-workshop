@@ -4,11 +4,15 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: ./setup-workspace.sh [--dry-run]
+Usage: ./setup-workspace.sh [--dry-run] [name]
 
-Create the lowest available numbered Lecture Pulse workspace, starting with
-lecture-pulse-1. The new workspace contains only AGENTS.md and
+Create the lowest available numbered Empty Workspace workspace, starting
+with empty-workspace-1. The new workspace contains only AGENTS.md and
 .agents/rules/workspace-memory.md.
+
+With a name, create that workspace instead, next to this script. The name may
+contain letters, digits, dots, hyphens, and underscores, and must not already
+exist.
 
 Options:
   --dry-run  Print the directory that would be created without changing files.
@@ -29,7 +33,14 @@ case "${1:-}" in
     ;;
 esac
 
-if [[ $# -ne 0 ]]; then
+if [[ $# -gt 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+workspace_name="${1:-}"
+if [[ -n "$workspace_name" && ! "$workspace_name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  printf 'Invalid workspace name: %s\n' "$workspace_name" >&2
   usage >&2
   exit 2
 fi
@@ -52,12 +63,19 @@ for required_file in "${required_files[@]}"; do
   fi
 done
 
-next_index=1
-while [[ -e "$script_dir/lecture-pulse-$next_index" || -L "$script_dir/lecture-pulse-$next_index" ]]; do
-  next_index=$((next_index + 1))
-done
-
-target_root="$script_dir/lecture-pulse-$next_index"
+if [[ -n "$workspace_name" ]]; then
+  target_root="$script_dir/$workspace_name"
+  if [[ -e "$target_root" || -L "$target_root" ]]; then
+    printf 'Workspace already exists: %s\n' "$target_root" >&2
+    exit 1
+  fi
+else
+  next_index=1
+  while [[ -e "$script_dir/empty-workspace-$next_index" || -L "$script_dir/empty-workspace-$next_index" ]]; do
+    next_index=$((next_index + 1))
+  done
+  target_root="$script_dir/empty-workspace-$next_index"
+fi
 
 if [[ "$dry_run" == true ]]; then
   printf 'Would create: %s\n' "$target_root"
@@ -65,17 +83,16 @@ if [[ "$dry_run" == true ]]; then
 fi
 
 setup_complete=false
+target_created=false
 
+# Only ever remove a directory this run created itself.
 cleanup() {
-  if [[ "$setup_complete" == false && -n "${target_root:-}" ]]; then
-    case "$target_root" in
-      "$script_dir"/lecture-pulse-[1-9]* )
-        rm -rf -- "$target_root"
-        ;;
-      * )
-        printf 'Refusing to clean unexpected setup target: %s\n' "$target_root" >&2
-        ;;
-    esac
+  if [[ "$setup_complete" == false && "$target_created" == true ]]; then
+    if [[ "$(dirname -- "$target_root")" == "$script_dir" ]]; then
+      rm -rf -- "$target_root"
+    else
+      printf 'Refusing to clean unexpected setup target: %s\n' "$target_root" >&2
+    fi
   fi
 }
 
@@ -83,15 +100,17 @@ trap cleanup EXIT HUP INT TERM
 
 # mkdir is the reservation step. If another process creates the same numbered
 # workspace first, continue to the next number without touching that directory.
+# A named workspace is never retried under another name.
 while ! mkdir -- "$target_root" 2>/dev/null; do
-  if [[ -e "$target_root" || -L "$target_root" ]]; then
+  if [[ -z "$workspace_name" ]] && [[ -e "$target_root" || -L "$target_root" ]]; then
     next_index=$((next_index + 1))
-    target_root="$script_dir/lecture-pulse-$next_index"
+    target_root="$script_dir/empty-workspace-$next_index"
     continue
   fi
   printf 'Unable to create workspace directory: %s\n' "$target_root" >&2
   exit 1
 done
+target_created=true
 
 mkdir -p -- "$target_root/.agents/rules"
 cp -- "$agents_source" "$target_root/AGENTS.md"
@@ -119,5 +138,5 @@ fi
 setup_complete=true
 trap - EXIT HUP INT TERM
 
-printf 'Created Lecture Pulse workspace: %s\n' "$target_root"
+printf 'Created Empty Workspace workspace: %s\n' "$target_root"
 printf 'Open it as the workspace and read AGENTS.md before starting development.\n'

@@ -37,7 +37,7 @@ If authoritative runtime, environment, or dependency indicators conflict and app
 
 If compatibility or project association cannot be established from files alone, obtain authorization before running a non-mutating check with the exact interpreter or established manager.
 
-If no suitable environment exists, propose an environment using the established manager and its configured location. For a new unmanaged project, prefer `<workspace-root>/.venv`. Obtain approval before creating it.
+If no suitable environment exists, propose an environment using the established manager and its configured location. For a new unmanaged project, prefer `<workspace-root>/.venv`, where `<workspace-root>` is the folder that contains the `.agents/` folder holding this skill; if that cannot be determined, use the folder the host opened as the workspace, and if that is still ambiguous, ask. Obtain approval before creating it.
 
 You may inspect a base Python interpreter or use it to create an approved isolated environment. You must never install project dependencies into the system or global Python environment.
 

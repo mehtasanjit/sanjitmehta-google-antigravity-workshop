@@ -6,8 +6,8 @@ usage() {
   cat <<'EOF'
 Usage: ./setup-workspace.sh [--dry-run]
 
-Create the lowest available numbered Lecture Pulse workspace, starting with
-lecture-pulse-1. The new workspace contains only AGENTS.md and
+Create the lowest available numbered Kanban Board workspace, starting with
+kanban-board-1. The new workspace contains only AGENTS.md and
 .agents/rules/workspace-memory.md.
 
 Options:
@@ -53,11 +53,11 @@ for required_file in "${required_files[@]}"; do
 done
 
 next_index=1
-while [[ -e "$script_dir/lecture-pulse-$next_index" || -L "$script_dir/lecture-pulse-$next_index" ]]; do
+while [[ -e "$script_dir/kanban-board-$next_index" || -L "$script_dir/kanban-board-$next_index" ]]; do
   next_index=$((next_index + 1))
 done
 
-target_root="$script_dir/lecture-pulse-$next_index"
+target_root="$script_dir/kanban-board-$next_index"
 
 if [[ "$dry_run" == true ]]; then
   printf 'Would create: %s\n' "$target_root"
@@ -69,7 +69,7 @@ setup_complete=false
 cleanup() {
   if [[ "$setup_complete" == false && -n "${target_root:-}" ]]; then
     case "$target_root" in
-      "$script_dir"/lecture-pulse-[1-9]* )
+      "$script_dir"/kanban-board-[1-9]* )
         rm -rf -- "$target_root"
         ;;
       * )
@@ -86,7 +86,7 @@ trap cleanup EXIT HUP INT TERM
 while ! mkdir -- "$target_root" 2>/dev/null; do
   if [[ -e "$target_root" || -L "$target_root" ]]; then
     next_index=$((next_index + 1))
-    target_root="$script_dir/lecture-pulse-$next_index"
+    target_root="$script_dir/kanban-board-$next_index"
     continue
   fi
   printf 'Unable to create workspace directory: %s\n' "$target_root" >&2
@@ -119,5 +119,5 @@ fi
 setup_complete=true
 trap - EXIT HUP INT TERM
 
-printf 'Created Lecture Pulse workspace: %s\n' "$target_root"
+printf 'Created Kanban Board workspace: %s\n' "$target_root"
 printf 'Open it as the workspace and read AGENTS.md before starting development.\n'

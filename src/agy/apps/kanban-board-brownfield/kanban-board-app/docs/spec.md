@@ -68,9 +68,9 @@ Each card has:
 - Drag-and-drop
 - Accounts, multiple boards, real-time collaboration, integrations, import/export, AI features
 
-## Deviation from the Kanban Board Lab requirements
+## Deviation from the Kanban Board requirements
 
-`kanban-board-lab/docs/requirements.md` specifies browser-local persistence. This baseline instead persists on a small **FastAPI + SQLite** backend, so that the demo can show backend and frontend work happening in parallel.
+`kanban-board/docs/requirements.md` specifies browser-local persistence. This baseline instead persists on a small **FastAPI + SQLite** backend, so that the demo can show backend and frontend work happening in parallel.
 
 ## Acceptance criteria
 
