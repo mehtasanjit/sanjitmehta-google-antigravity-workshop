@@ -161,6 +161,17 @@ async def get_course_enrollments(ctx: Context, course_id: str) -> Any:
         return _err(e)
 
 
+def _client_id_from_basic(auth_header: str) -> Optional[str]:
+    """Extract the client_id from an 'Authorization: Basic base64(id:secret)' header."""
+    if not auth_header.lower().startswith("basic "):
+        return None
+    try:
+        decoded = base64.b64decode(auth_header.split(" ", 1)[1].strip()).decode("utf-8")
+    except Exception:
+        return None
+    return decoded.split(":", 1)[0] or None
+
+
 async def oauth2_token_proxy(
     request: Request, client: Optional[httpx.AsyncClient] = None
 ) -> Response:
@@ -210,6 +221,18 @@ async def oauth2_token_proxy(
         headers["Authorization"] = f"Basic {encoded}"
     elif incoming_auth:
         headers["Authorization"] = incoming_auth
+        # Caller already sent Basic auth: recover the client_id for the allowlist.
+        client_id = _client_id_from_basic(incoming_auth)
+
+    # Optional allowlist: when ALLOWED_CLIENT_IDS is set, only forward for those
+    # Blackboard apps, so this public endpoint can't be used as an open relay.
+    # When unset, every request is forwarded (Blackboard still validates creds).
+    if config.ALLOWED_CLIENT_IDS and client_id not in config.ALLOWED_CLIENT_IDS:
+        logger.warning("Token proxy rejected request for non-allowlisted client_id")
+        return JSONResponse(
+            {"error": "invalid_client", "error_description": "Client not allowed"},
+            status_code=401,
+        )
 
     target_url = (
         f"{config.BLACKBOARD_BASE_URL.rstrip('/')}/learn/api/public/v1/oauth2/token"

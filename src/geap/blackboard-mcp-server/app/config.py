@@ -28,3 +28,15 @@ REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "30"))
 
 # Concurrency for batched gradebook queries (avoids rate-limits / socket exhaustion).
 BATCH_SIZE = int(os.getenv("GRADING_BATCH_SIZE", "5"))
+
+# OPTIONAL. OAuth client IDs (Blackboard REST "Application Key") that the
+# /oauth2/token proxy is allowed to forward to Blackboard. Comma-separated (e.g.
+# staging + prod app keys). Client IDs are public (they appear in the
+# authorization URL), so a plain env var is fine.
+# - Empty (default): the proxy forwards every request; Blackboard still validates
+#   the client credentials.
+# - Set: requests for any other client ID get 401 and never reach Blackboard
+#   (prevents the endpoint being used as an open relay). Recommended for prod.
+ALLOWED_CLIENT_IDS = frozenset(
+    c.strip() for c in os.getenv("ALLOWED_CLIENT_IDS", "").split(",") if c.strip()
+)

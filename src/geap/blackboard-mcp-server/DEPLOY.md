@@ -32,11 +32,42 @@ BLACKBOARD_BASE_URL=https://yourinstitution.blackboard.com \
 ```
 
 This runs `gcloud run deploy blackboard-mcp --source . --allow-unauthenticated`
-and sets `BLACKBOARD_BASE_URL` + `MCP_PATH=/mcp` as env vars on the service.
+and sets `BLACKBOARD_BASE_URL`, `MCP_PATH=/mcp` and (if provided)
+`ALLOWED_CLIENT_IDS` as env vars on the service.
+
+**`ALLOWED_CLIENT_IDS` (optional)** = your Blackboard REST application key (the
+OAuth client ID you enter in Gemini Enterprise).
+- **Unset (default):** the `/oauth2/token` proxy forwards every request;
+  Blackboard still validates the client ID / secret.
+- **Set:** the proxy only forwards those IDs and returns `401 invalid_client`
+  for anything else without contacting Blackboard, so it can't be used as an
+  open relay. Recommended once the setup is working; just redeploy with it set.
+
+The value is public (it appears in the authorization URL). Comma-separate
+several (e.g. staging and prod app keys).
 
 > `--allow-unauthenticated` is intentional: the endpoint must be reachable, but
 > every tool call requires a per-user Blackboard token in the `Authorization`
 > header (GE supplies it), and Blackboard enforces access.
+
+### Staging and production side by side (recommended)
+
+Deploy one service per Blackboard instance and create one GE connector for each.
+Each service is always paired with the connector that points at the same
+Blackboard, so you never have to switch anything:
+
+```bash
+SERVICE=blackboard-mcp-stg BLACKBOARD_BASE_URL=https://<staging-host> \
+  PROJECT_ID=<p> REGION=<r> ./deploy.sh
+SERVICE=blackboard-mcp     BLACKBOARD_BASE_URL=https://<prod-host> \
+  PROJECT_ID=<p> REGION=<r> ./deploy.sh
+# add ALLOWED_CLIENT_IDS=<app-key> to either command to lock its proxy down
+```
+
+> Changing `BLACKBOARD_BASE_URL` on a running service does **not** switch
+> environments on its own: the GE connector's Authorization URL (which can't be
+> edited after creation) and users' stored tokens still belong to the old
+> instance.
 
 ## 3. Get the endpoint
 

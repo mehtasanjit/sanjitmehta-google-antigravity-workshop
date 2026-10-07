@@ -121,5 +121,5 @@ All endpoints are under `/api`. Errors use the shape `{"detail": "<message>"}`.
 | Level | Tool | Focus |
 |---|---|---|
 | Backend unit/API | pytest + TestClient | Validation, create/edit/move/reorder/delete, contiguity, reset, 404/422 |
-| Frontend component | Vitest + React Testing Library | Board render, create validation, overdue label |
+| Frontend component | Vitest + React Testing Library | Board render, create validation, overdue label, search, move, error display |
 | Browser | Antigravity browser agent (during the demo) | End-to-end checks in Chrome |
