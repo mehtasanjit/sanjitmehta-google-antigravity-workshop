@@ -1,0 +1,5 @@
+# Local OAuth tokens and credentials (never commit)
+tokens/
+credentials.json
+mcp_config.json
+.env

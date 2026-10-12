@@ -221,3 +221,9 @@ __marimo__/
 
 # Private workspace memory
 /.memory/
+
+# Local MCP OAuth tokens and configs
+**/tokens/
+**/credentials.json
+**/mcp_config.json
+
