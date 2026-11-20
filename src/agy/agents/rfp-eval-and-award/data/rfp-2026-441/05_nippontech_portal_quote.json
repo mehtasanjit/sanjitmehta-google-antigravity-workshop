@@ -1,0 +1,47 @@
+{
+  "rfp_reference": "RFP-2026-441",
+  "supplier_name": "NipponTech Precision KK",
+  "vendor_id": "VND-418",
+  "quote_date": "2026-11-16",
+  "valid_until": "2026-12-25",
+  "currency": "JPY",
+  "incoterm": "DDP Hyderabad",
+  "payment_terms": "Net 30",
+  "warranty_months": 24,
+  "certifications": ["JIS", "CE", "ISO-9001"],
+  "product": {
+    "sku": "NTK-IP67-500",
+    "description": "Industrial Outdoor Pressure Sensor 0-500 PSI",
+    "ingress_protection_rating": "IP67"
+  },
+  "pricing_model": "marginal_slabs",
+  "quantity_quoted": 1000,
+  "price_slabs": [
+    {
+      "from_unit": 1,
+      "to_unit": 500,
+      "unit_price_jpy": 7500
+    },
+    {
+      "from_unit": 501,
+      "to_unit": 1000,
+      "unit_price_jpy": 6800
+    }
+  ],
+  "delivery_schedule": {
+    "split_shipment": true,
+    "batches": [
+      {
+        "batch_number": 1,
+        "units": 500,
+        "lead_time_days": 14
+      },
+      {
+        "batch_number": 2,
+        "units": 500,
+        "lead_time_days": 35
+      }
+    ],
+    "notes": "First 500 units ship from Tokyo warehouse within 14 days; remaining 500 units require new production run and arrive in Hyderabad on day 35."
+  }
+}

@@ -1,0 +1,5 @@
+# Vendor: Pacific Industrial Controls Inc | Vendor_ID: VND-901 | Valid_Until: 2026-12-22
+# Incoterm: DDP Hyderabad | Currency: USD | Rating: IP67 Certified | Lead_Time_Days: 20 | Warranty_Months: 18 | Payment_Terms: Net 30 | Certifications: CE, ISO-9001
+Line_No,SKU,Description,Unit_Basis,Qty_Quoted,Price_USD,Mandatory_For_RFP_Spec
+1,PIC-500-IP67,IP67 Industrial Outdoor Pressure Sensor (0-500 PSI),per_unit,1000,43.80,yes
+# Commercial_Notes: Standard 18-month limited warranty applies from delivery date. Extended 24-month warranty is not offered on this SKU. All duties and freight into Hyderabad are included under DDP terms.

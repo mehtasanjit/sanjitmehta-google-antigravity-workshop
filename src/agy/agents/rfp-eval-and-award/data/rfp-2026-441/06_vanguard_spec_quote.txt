@@ -1,0 +1,19 @@
+QUOTATION RESPONSE: RFP-2026-441
+Supplier: Vanguard Industrial Supply LLC
+Vendor ID: VND-505
+Quote Date: 2026-10-19
+Valid Until: 2026-11-18
+
+Item: VGS-500 Outdoor Pressure Sensor (0-500 PSI)
+Quantity: 1,000 units
+Unit Price: $45.50 USD (Extended Total: $45,500.00 USD)
+Incoterm: DDP Hyderabad
+Lead Time: 22 calendar days from PO receipt
+Warranty: 24 months standard hardware warranty
+Payment Terms: Net 30
+Certifications: CE, ISO-9001
+
+Technical Notes:
+- Sensors are built with a rugged weather-resistant outdoor housing suitable for industrial plant yards.
+- Formal ingress protection laboratory test certificates are available upon request after order placement.
+- All duties, insurance, and local Hyderabad delivery are included in the unit price.

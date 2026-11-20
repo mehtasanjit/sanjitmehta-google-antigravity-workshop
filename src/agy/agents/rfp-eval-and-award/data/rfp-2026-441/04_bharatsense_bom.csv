@@ -1,0 +1,8 @@
+# Vendor: BharatSense Controls Pvt Ltd | Vendor_ID: VND-312 | Valid_Until: 2026-12-18
+# Incoterm: DDP Hyderabad | Currency: INR | Lead_Time_Days: 18 | Warranty_Months: 24 | Payment_Terms: Net 30 | Certifications: BIS, ISO-9001
+Line_No,SKU,Description,Unit_Basis,Qty_Quoted,Price_INR,Mandatory_For_RFP_Spec
+1,BS-P400-CORE,Pressure Sensor Core Module (0-500 PSI),per_unit,1000,3350,yes
+2,BS-IP67-MNT,IP67 Outdoor Enclosure and Mounting Kit (required for IP67 rating),per_unit,1000,420,yes
+3,BS-CAL-BATCH,Factory ISO Batch Calibration Certificate,flat_order,1,65000,yes
+4,BS-SPARE-KIT,Optional 2-Year Field Maintenance Spare Pack,flat_order,1,150000,no
+# Tax_Notes: Prices above are exclusive of 18% domestic IGST/CGST+SGST. GST is billed separately and eligible for Input Tax Credit (ITC) under Indian GST rules.

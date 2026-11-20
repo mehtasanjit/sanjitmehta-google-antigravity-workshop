@@ -1,0 +1,169 @@
+{
+  "policy_version": "2026.11",
+  "rfp_metadata": {
+    "rfp_id": "RFP-2026-441",
+    "title": "Industrial Outdoor Pressure Sensors (0-500 PSI)",
+    "evaluation_date": "2026-11-23",
+    "required_quantity": 1000,
+    "target_incoterm": "DDP Hyderabad",
+    "max_delivery_days": 28,
+    "required_ingress_rating": "IP67",
+    "min_warranty_months": 24,
+    "auto_approval_cap_usd": 50000.0
+  },
+  "fx_rates_to_usd": {
+    "USD": 1.0,
+    "EUR": 1.08,
+    "INR": 0.0119,
+    "JPY": 0.0066
+  },
+  "normalization_rules": {
+    "exw_shenzhen_adder_pct": 0.18,
+    "exw_shenzhen_breakdown": {
+      "customs_duty_pct": 0.12,
+      "international_air_freight_pct": 0.06
+    },
+    "exclude_optional_line_items": true,
+    "india_gst_rate": 0.18,
+    "india_gst_recoverable_itc": true,
+    "gst_accounting_note": "Exclude recoverable 18% Indian GST Input Tax Credit from net landed USD comparison; report gross cash outlay separately."
+  },
+  "compliance_rules": {
+    "require_approved_vendor": true,
+    "ignore_unverified_verbal_approvals": true,
+    "require_valid_quote_on_evaluation_date": true,
+    "require_explicit_ingress_certification": true,
+    "full_quantity_must_meet_sla": true,
+    "manager_signoff_required_above_usd": 50000.0,
+    "manager_signoff_trigger": "only_when_buyer_selects_bid_above_cap"
+  },
+  "scoring_rubric": {
+    "total_points": 100,
+    "weights": {
+      "net_landed_cost": 40,
+      "delivery_speed": 20,
+      "warranty_months": 15,
+      "supplier_track_record": 15,
+      "payment_terms": 10
+    },
+    "cost_formula": "weight * (min_compliant_net_landed_usd / bid_net_landed_usd)",
+    "delivery_speed_brackets": [
+      { "max_days": 14, "points": 20 },
+      { "max_days": 18, "points": 16 },
+      { "max_days": 21, "points": 12 },
+      { "max_days": 28, "points": 8 }
+    ],
+    "warranty_brackets": [
+      { "min_months": 36, "points": 15 },
+      { "min_months": 24, "points": 10 }
+    ],
+    "supplier_track_record_tiers": {
+      "incumbent_high_otd": {
+        "description": "Approved incumbent with >= 98.0% historical OTD and >= 10 prior POs",
+        "points": 15
+      },
+      "established_partner": {
+        "description": "Approved partner with >= 95.0% historical OTD and >= 3 prior POs",
+        "points": 12
+      },
+      "standard_approved": {
+        "description": "Approved vendor with prior PO history below 95.0% OTD",
+        "points": 8
+      },
+      "new_onboarded": {
+        "description": "Newly onboarded approved vendor with 0 prior POs",
+        "points": 6
+      }
+    },
+    "payment_terms_points": {
+      "Net 90": 10,
+      "Net 60": 8,
+      "Net 45": 7,
+      "Net 30": 5,
+      "Advance": 2
+    }
+  },
+  "approved_vendors": {
+    "VND-104": {
+      "name": "Apex Sensors Inc",
+      "location": "Chicago, USA",
+      "relationship_status": "incumbent",
+      "tenure_years": 7.0,
+      "prior_pos": 24,
+      "on_time_delivery_pct": 99.2,
+      "track_record_tier": "incumbent_high_otd"
+    },
+    "VND-209": {
+      "name": "EuroSense GmbH",
+      "location": "Munich, Germany",
+      "relationship_status": "incumbent",
+      "tenure_years": 5.0,
+      "prior_pos": 14,
+      "on_time_delivery_pct": 98.5,
+      "track_record_tier": "incumbent_high_otd"
+    },
+    "VND-312": {
+      "name": "BharatSense Controls Pvt Ltd",
+      "location": "Pune, India",
+      "relationship_status": "new_onboarded",
+      "tenure_years": 0.5,
+      "prior_pos": 0,
+      "on_time_delivery_pct": null,
+      "track_record_tier": "new_onboarded"
+    },
+    "VND-418": {
+      "name": "NipponTech Precision KK",
+      "location": "Tokyo, Japan",
+      "relationship_status": "established_partner",
+      "tenure_years": 3.5,
+      "prior_pos": 9,
+      "on_time_delivery_pct": 97.4,
+      "track_record_tier": "established_partner"
+    },
+    "VND-505": {
+      "name": "Vanguard Industrial Supply LLC",
+      "location": "Houston, USA",
+      "relationship_status": "established_partner",
+      "tenure_years": 2.0,
+      "prior_pos": 4,
+      "on_time_delivery_pct": 95.1,
+      "track_record_tier": "established_partner"
+    },
+    "VND-611": {
+      "name": "QuantumGrid Automation Corp",
+      "location": "Austin, USA",
+      "relationship_status": "established_partner",
+      "tenure_years": 3.0,
+      "prior_pos": 8,
+      "on_time_delivery_pct": 96.0,
+      "track_record_tier": "established_partner"
+    },
+    "VND-702": {
+      "name": "NordicSense AB",
+      "location": "Gothenburg, Sweden",
+      "relationship_status": "incumbent",
+      "tenure_years": 4.0,
+      "prior_pos": 11,
+      "on_time_delivery_pct": 98.0,
+      "track_record_tier": "incumbent_high_otd"
+    },
+    "VND-815": {
+      "name": "DeccanTech Systems Pvt Ltd",
+      "location": "Hyderabad, India",
+      "relationship_status": "established_partner",
+      "tenure_years": 2.0,
+      "prior_pos": 6,
+      "on_time_delivery_pct": 95.5,
+      "track_record_tier": "established_partner"
+    },
+    "VND-901": {
+      "name": "Pacific Industrial Controls Inc",
+      "location": "San Jose, USA",
+      "relationship_status": "standard_approved",
+      "tenure_years": 1.0,
+      "prior_pos": 2,
+      "on_time_delivery_pct": 93.0,
+      "track_record_tier": "standard_approved"
+    }
+  }
+}

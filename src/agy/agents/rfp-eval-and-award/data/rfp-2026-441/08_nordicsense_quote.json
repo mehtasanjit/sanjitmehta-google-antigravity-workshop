@@ -1,0 +1,38 @@
+{
+  "rfp_reference": "RFP-2026-441",
+  "supplier_name": "NordicSense AB",
+  "vendor_id": "VND-702",
+  "quote_date": "2026-11-17",
+  "valid_until": "2026-12-28",
+  "currency": "EUR",
+  "incoterm": "DDP Hyderabad",
+  "payment_terms": "Net 45",
+  "lead_time_days": 16,
+  "warranty_months": 36,
+  "certifications": ["CE", "ATEX", "ISO-9001", "ISO-14001"],
+  "product": {
+    "sku": "NS-PRO-500-IP67",
+    "description": "Heavy-Duty IP67 Industrial Pressure Sensor (0-500 PSI)",
+    "ingress_protection_rating": "IP67"
+  },
+  "quantity_quoted": 1000,
+  "line_items": [
+    {
+      "line_no": 1,
+      "description": "NS-PRO-500-IP67 Pressure Sensor Unit",
+      "unit_basis": "per_unit",
+      "quantity": 1000,
+      "unit_price_eur": 45.50,
+      "mandatory": true
+    },
+    {
+      "line_no": 2,
+      "description": "Mandatory Factory IP67 Immersion Test & Calibration Certificate Pack",
+      "unit_basis": "flat_order",
+      "quantity": 1,
+      "flat_price_eur": 1800.00,
+      "mandatory": true
+    }
+  ],
+  "notes": "Single consolidated air shipment DDP Hyderabad arriving within 16 calendar days. All EU export, air freight, insurance, and Indian import duties included."
+}

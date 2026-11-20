@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 530" width="1100" height="530" role="img" aria-labelledby="wf-title wf-desc">
+  <title id="wf-title">RFP Evaluation and Award Agent Workflow</title>
+  <desc id="wf-desc">Three-phase workflow showing automated GCS intake, parallel LLM extraction, deterministic Python scoring, interactive buyer review with optional what-if re-scoring, an explicit human supplier selection step, and post-selection PO drafting, over-$50K manager sign-off, or policy blocking.</desc>
+
+  <defs>
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+      .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <!-- Pure White Canvas -->
+  <rect x="0" y="0" width="1100" height="530" rx="12" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <rect x="36" y="24" width="28" height="3.5" rx="1.5" fill="#1A73E8"/>
+  <text x="36" y="51" class="font-sans" font-size="20" font-weight="700" fill="#0F172A">RFP Evaluation &amp; Award Agent: Workflow</text>
+  <text x="36" y="71" class="font-sans" font-size="12.5" font-weight="400" fill="#64748B">Structured LLM extraction, deterministic Python scoring, explicit buyer selection, and conditional &gt;$50K sign-off</text>
+  <line x1="36" y1="86" x2="1064" y2="86" stroke="#CBD5E1" stroke-width="1"/>
+
+  <!-- Phase Eyebrow Labels -->
+  <text x="36" y="110" class="font-sans" font-size="10.5" font-weight="700" letter-spacing="0.8" fill="#1A73E8">01  INTAKE &amp; SCORING (AUTOMATED)</text>
+  <text x="384" y="110" class="font-sans" font-size="10.5" font-weight="700" letter-spacing="0.8" fill="#1A73E8">02  BUYER REVIEW &amp; SELECTION</text>
+  <text x="744" y="110" class="font-sans" font-size="10.5" font-weight="700" letter-spacing="0.8" fill="#1A73E8">03  POST-SELECTION GATES</text>
+
+  <!-- ==================== ZONE 1: INTAKE & SCORING ==================== -->
+
+  <!-- Node 1A: Read GCS Bucket -->
+  <rect x="36" y="126" width="304" height="76" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.2"/>
+  <rect x="36" y="126" width="4" height="76" rx="2" fill="#1A73E8"/>
+  <text x="52" y="151" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Read GCS Bucket</text>
+  <text x="52" y="170" class="font-sans" font-size="11.5" fill="#475569">10 supplier quotes (MD, CSV, TXT, JSON)</text>
+  <text x="52" y="187" class="font-mono" font-size="11" fill="#64748B">+ procurement_policy.json</text>
+
+  <!-- Arrow 1A -> 1B -->
+  <line x1="188" y1="202" x2="188" y2="222" stroke="#64748B" stroke-width="1.6"/>
+  <polygon points="183,221 193,221 188,229" fill="#64748B"/>
+
+  <!-- Node 1B: Parallel LLM Extractors -->
+  <rect x="36" y="230" width="304" height="86" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.2"/>
+  <rect x="36" y="230" width="4" height="86" rx="2" fill="#1A73E8"/>
+  <rect x="256" y="241" width="72" height="19" rx="9.5" fill="#EFF6FF"/>
+  <text x="292" y="254" text-anchor="middle" class="font-sans" font-size="9.5" font-weight="700" fill="#1D4ED8">TOOL-FREE</text>
+  <text x="52" y="255" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">10x Parallel LLM Extractors</text>
+  <text x="52" y="275" class="font-sans" font-size="11.5" fill="#475569">1 structured call per file (facts only)</text>
+  <text x="52" y="294" class="font-mono" font-size="11" fill="#1D4ED8">output: SupplierBidIntake (Pydantic)</text>
+
+  <!-- Arrow 1B -> 1C -->
+  <line x1="188" y1="316" x2="188" y2="336" stroke="#64748B" stroke-width="1.6"/>
+  <polygon points="183,335 193,335 188,343" fill="#64748B"/>
+
+  <!-- Node 1C: Deterministic Python Engine -->
+  <rect x="36" y="344" width="304" height="118" rx="8" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.2"/>
+  <rect x="36" y="344" width="4" height="118" rx="2" fill="#0F172A"/>
+  <rect x="270" y="355" width="58" height="19" rx="9.5" fill="#E2E8F0"/>
+  <text x="299" y="368" text-anchor="middle" class="font-sans" font-size="9.5" font-weight="700" fill="#0F172A">PYTHON</text>
+  <text x="52" y="369" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Deterministic Rules &amp; Scoring</text>
+  <text x="52" y="389" class="font-sans" font-size="11.2" fill="#334155">• Net landed USD (FX, cartons, EXW, GST)</text>
+  <text x="52" y="407" class="font-sans" font-size="11.2" fill="#334155">• Hard gates (allowlist, SLA, warranty, IP67)</text>
+  <text x="52" y="425" class="font-sans" font-size="11.2" fill="#334155">• 100-pt weighted rubric for 6 finalists</text>
+  <text x="52" y="445" class="font-sans" font-size="10.8" font-weight="600" fill="#475569">Ignores embedded prompt injections</text>
+
+  <!-- Explicit Orthogonal Connector Zone 1 -> Zone 2 (into Ranked Pros & Cons) -->
+  <line x1="340" y1="403" x2="362" y2="403" stroke="#1A73E8" stroke-width="1.8"/>
+  <line x1="362" y1="403" x2="362" y2="293" stroke="#1A73E8" stroke-width="1.8"/>
+  <line x1="362" y1="293" x2="376" y2="293" stroke="#1A73E8" stroke-width="1.8"/>
+  <polygon points="375,288 375,298 383,293" fill="#1A73E8"/>
+
+  <!-- ==================== ZONE 2: BUYER REVIEW & SELECTION ==================== -->
+
+  <!-- Node 2B: Optional What-If Re-Scoring (Top) -->
+  <rect x="384" y="126" width="276" height="76" rx="8" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.3" stroke-dasharray="5,4"/>
+  <text x="400" y="150" class="font-sans" font-size="13" font-weight="700" fill="#0F172A">Optional What-If Re-Scoring</text>
+  <text x="400" y="169" class="font-sans" font-size="11.3" fill="#475569">Adjust weights (e.g. cost 60%) or SLA</text>
+  <text x="400" y="187" class="font-sans" font-size="11" font-weight="600" fill="#1D4ED8">Python re-scores cache (no GCS re-read)</text>
+
+  <!-- Bidirectional What-If Arrows between 2A and 2B -->
+  <line x1="486" y1="246" x2="486" y2="210" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="481,211 491,211 486,203" fill="#64748B"/>
+  <text x="476" y="229" text-anchor="end" class="font-sans" font-size="10.5" fill="#64748B">What-if</text>
+
+  <line x1="558" y1="202" x2="558" y2="238" stroke="#1A73E8" stroke-width="1.5"/>
+  <polygon points="553,237 563,237 558,245" fill="#1A73E8"/>
+  <text x="568" y="229" text-anchor="start" class="font-sans" font-size="10.5" fill="#1D4ED8">Updated rank</text>
+
+  <!-- Node 2A: Ranked Pros & Cons (Middle, pauses here) -->
+  <rect x="384" y="246" width="276" height="94" rx="8" fill="#F8FAFF" stroke="#93C5FD" stroke-width="1.4"/>
+  <rect x="384" y="246" width="4" height="94" rx="2" fill="#1A73E8"/>
+  <rect x="580" y="257" width="68" height="19" rx="9.5" fill="#FEF3C7"/>
+  <text x="614" y="270" text-anchor="middle" class="font-sans" font-size="9.5" font-weight="700" fill="#B45309">NO PO YET</text>
+  <text x="400" y="271" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Ranked Pros &amp; Cons</text>
+  <text x="400" y="291" class="font-sans" font-size="11.3" fill="#334155">• 6 compliant finalists with tradeoffs</text>
+  <text x="400" y="308" class="font-sans" font-size="11.3" fill="#334155">• 4 filtered bids with policy reasons</text>
+  <text x="400" y="327" class="font-sans" font-size="10.8" font-weight="600" fill="#64748B">Stops and presents options to buyer</text>
+
+  <!-- Explicit Downward Human Gate Arrow 2A -> 2C -->
+  <line x1="522" y1="340" x2="522" y2="370" stroke="#1A73E8" stroke-width="1.8"/>
+  <polygon points="517,369 527,369 522,377" fill="#1A73E8"/>
+  <text x="532" y="363" class="font-sans" font-size="10.5" font-weight="600" fill="#1D4ED8">Buyer chooses 1 bid</text>
+
+  <!-- Node 2C: Explicit Buyer Selection Gate (Bottom, ONLY exit to Zone 3) -->
+  <rect x="384" y="378" width="276" height="84" rx="8" fill="#EFF6FF" stroke="#1A73E8" stroke-width="1.8"/>
+  <rect x="384" y="378" width="4" height="84" rx="2" fill="#1A73E8"/>
+  <rect x="562" y="389" width="86" height="19" rx="9.5" fill="#1A73E8"/>
+  <text x="605" y="402" text-anchor="middle" class="font-sans" font-size="9" font-weight="700" fill="#FFFFFF">HUMAN GATE</text>
+  <text x="400" y="403" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Buyer Selects a Bid</text>
+  <text x="400" y="423" class="font-sans" font-size="11.3" fill="#1E3A8A">User explicitly names the winning vendor</text>
+  <text x="400" y="442" class="font-sans" font-size="11" font-weight="600" fill="#1D4ED8">Routes chosen bid to policy gates</text>
+
+  <!-- ==================== ZONE 3: POST-SELECTION GATES ==================== -->
+
+  <!-- Orthogonal 3-Way Bus strictly from Node 2C (Buyer Selects a Bid) -->
+  <line x1="660" y1="420" x2="682" y2="420" stroke="#1A73E8" stroke-width="1.8"/>
+  <line x1="682" y1="168" x2="682" y2="420" stroke="#64748B" stroke-width="1.6"/>
+
+  <!-- Branch 1: <= $50K -->
+  <line x1="682" y1="168" x2="736" y2="168" stroke="#16A34A" stroke-width="1.8"/>
+  <polygon points="735,163 735,173 743,168" fill="#16A34A"/>
+  <text x="712" y="160" text-anchor="middle" class="font-sans" font-size="10.5" font-weight="700" fill="#15803D">&lt;= $50K</text>
+
+  <!-- Branch 2: > $50K -->
+  <line x1="682" y1="295" x2="736" y2="295" stroke="#D97706" stroke-width="1.8"/>
+  <polygon points="735,290 735,300 743,295" fill="#D97706"/>
+  <text x="712" y="287" text-anchor="middle" class="font-sans" font-size="10.5" font-weight="700" fill="#B45309">&gt; $50K</text>
+
+  <!-- Branch 3: Invalid -->
+  <line x1="682" y1="420" x2="736" y2="420" stroke="#DC2626" stroke-width="1.8"/>
+  <polygon points="735,415 735,425 743,420" fill="#DC2626"/>
+  <text x="712" y="412" text-anchor="middle" class="font-sans" font-size="10.5" font-weight="700" fill="#B91C1C">Invalid</text>
+
+  <!-- Node 3A: Direct PO Draft (<= $50K) -->
+  <rect x="744" y="126" width="320" height="84" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.2"/>
+  <rect x="744" y="126" width="4" height="84" rx="2" fill="#16A34A"/>
+  <rect x="994" y="137" width="58" height="19" rx="9.5" fill="#DCFCE7"/>
+  <text x="1023" y="150" text-anchor="middle" class="font-sans" font-size="9.5" font-weight="700" fill="#15803D">&lt;= $50K</text>
+  <text x="760" y="151" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Draft Award Memo &amp; PO</text>
+  <text x="760" y="170" class="font-sans" font-size="11.5" fill="#334155">Direct PO drafting, no sign-off gate</text>
+  <text x="760" y="189" class="font-sans" font-size="11" fill="#475569">DeccanTech, EuroSense, QuantumGrid, BharatSense</text>
+
+  <!-- Upward Approval Connector 3B -> 3A -->
+  <line x1="904" y1="246" x2="904" y2="218" stroke="#16A34A" stroke-width="1.6"/>
+  <polygon points="899,219 909,219 904,211" fill="#16A34A"/>
+  <text x="914" y="233" class="font-sans" font-size="10.5" font-weight="600" fill="#15803D">If manager approves</text>
+
+  <!-- Node 3B: Conditional Manager Sign-Off (> $50K) -->
+  <rect x="744" y="246" width="320" height="98" rx="8" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.2"/>
+  <rect x="744" y="246" width="4" height="98" rx="2" fill="#D97706"/>
+  <rect x="974" y="257" width="78" height="19" rx="9.5" fill="#FEF3C7"/>
+  <text x="1013" y="270" text-anchor="middle" class="font-sans" font-size="9.5" font-weight="700" fill="#B45309">&gt; $50K ONLY</text>
+  <text x="760" y="271" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Hold PO &amp; Request Sign-Off</text>
+  <text x="760" y="290" class="font-sans" font-size="11.5" fill="#334155">Exception memo with overage &amp; rationale</text>
+  <text x="760" y="309" class="font-sans" font-size="11" fill="#475569">NordicSense ($51.1K) or Apex ($52.4K)</text>
+  <text x="760" y="328" class="font-sans" font-size="10.8" font-weight="600" fill="#B45309">Rejected: return to buyer to select another bid</text>
+
+  <!-- Node 3C: Policy Block (Disqualified / Incomplete) -->
+  <rect x="744" y="376" width="320" height="86" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.2"/>
+  <rect x="744" y="376" width="4" height="86" rx="2" fill="#DC2626"/>
+  <rect x="990" y="387" width="62" height="19" rx="9.5" fill="#FEE2E2"/>
+  <text x="1021" y="400" text-anchor="middle" class="font-sans" font-size="9.5" font-weight="700" fill="#B91C1C">BLOCKED</text>
+  <text x="760" y="401" class="font-sans" font-size="13.5" font-weight="700" fill="#0F172A">Block PO &amp; Cite Policy</text>
+  <text x="760" y="420" class="font-sans" font-size="11.5" fill="#334155">Rejects NovaTech, NipponTech, Pacific</text>
+  <text x="760" y="439" class="font-sans" font-size="11" fill="#475569">Offers Supplier Clarification for Vanguard</text>
+
+  <!-- Footer -->
+  <line x1="36" y1="488" x2="1064" y2="488" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="36" y="510" class="font-sans" font-size="11" fill="#64748B">RFP-2026-441 · Synthetic data · PO drafting runs only after buyer selection (and manager sign-off if &gt;$50K)</text>
+  <circle cx="846" cy="506" r="4" fill="#1A73E8"/>
+  <text x="856" y="510" class="font-sans" font-size="10.5" fill="#64748B">LLM / UX</text>
+  <circle cx="922" cy="506" r="4" fill="#0F172A"/>
+  <text x="932" y="510" class="font-sans" font-size="10.5" fill="#64748B">Python Code</text>
+  <circle cx="1014" cy="506" r="4" fill="#16A34A"/>
+  <text x="1024" y="510" class="font-sans" font-size="10.5" fill="#64748B">Gates</text>
+</svg>
