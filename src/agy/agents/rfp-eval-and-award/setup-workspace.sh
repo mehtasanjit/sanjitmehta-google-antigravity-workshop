@@ -7,11 +7,11 @@ usage() {
 Usage: ./setup-workspace.sh [--dry-run]
 
 Create the lowest available numbered RFP Evaluation and Award Agent workspace,
-starting with rfp-eval-and-award-1. The new workspace contains only AGENTS.md
-and .agents/rules/workspace-memory.md.
+starting with rfp-eval-and-award-1. Each new workspace contains only two empty
+subdirectories: adk/ and langgraph/.
 
 Options:
-  --dry-run  Print the directory that would be created without changing files.
+  --dry-run  Print the directories that would be created without changing files.
   -h, --help Show this help.
 EOF
 }
@@ -35,22 +35,6 @@ if [[ $# -ne 0 ]]; then
 fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-repository_root="$(cd -- "$script_dir/../../../.." && pwd)"
-guidance_root="$repository_root/src/resources/workspace-guidance"
-agents_source="$guidance_root/agents/base.md"
-memory_rule_source="$guidance_root/rules/workspace-memory.md"
-
-required_files=(
-  "$agents_source"
-  "$memory_rule_source"
-)
-
-for required_file in "${required_files[@]}"; do
-  if [[ ! -f "$required_file" ]]; then
-    printf 'Required setup resource is missing: %s\n' "$required_file" >&2
-    exit 1
-  fi
-done
 
 next_index=1
 while [[ -e "$script_dir/rfp-eval-and-award-$next_index" || -L "$script_dir/rfp-eval-and-award-$next_index" ]]; do
@@ -60,7 +44,7 @@ done
 target_root="$script_dir/rfp-eval-and-award-$next_index"
 
 if [[ "$dry_run" == true ]]; then
-  printf 'Would create: %s\n' "$target_root"
+  printf 'Would create: %s (with empty adk/ and langgraph/ subdirectories)\n' "$target_root"
   exit 0
 fi
 
@@ -93,24 +77,10 @@ while ! mkdir -- "$target_root" 2>/dev/null; do
   exit 1
 done
 
-mkdir -p -- "$target_root/.agents/rules"
-cp -- "$agents_source" "$target_root/AGENTS.md"
-cp -- "$memory_rule_source" "$target_root/.agents/rules/workspace-memory.md"
-
-required_paths=(
-  "$target_root/AGENTS.md"
-  "$target_root/.agents/rules/workspace-memory.md"
-)
-
-for required_path in "${required_paths[@]}"; do
-  if [[ ! -e "$required_path" ]]; then
-    printf 'Workspace setup is incomplete; required path is missing: %s\n' "$required_path" >&2
-    exit 1
-  fi
-done
+mkdir -p -- "$target_root/adk" "$target_root/langgraph"
 
 unexpected_root_entry="$(find "$target_root" -mindepth 1 -maxdepth 1 \
-  ! -name AGENTS.md ! -name .agents -print -quit)"
+  ! -name adk ! -name langgraph -print -quit)"
 if [[ -n "$unexpected_root_entry" ]]; then
   printf 'Workspace setup created an unexpected root entry: %s\n' "$unexpected_root_entry" >&2
   exit 1
@@ -120,4 +90,5 @@ setup_complete=true
 trap - EXIT HUP INT TERM
 
 printf 'Created RFP Evaluation and Award Agent workspace: %s\n' "$target_root"
-printf 'Open it as the workspace and read AGENTS.md before starting development.\n'
+printf '  - %s/adk\n' "$target_root"
+printf '  - %s/langgraph\n' "$target_root"

@@ -1,7 +1,0 @@
-{
-  "dependencies": ["."],
-  "graphs": {
-    "agent": "./app/agent.py:root_agent"
-  },
-  "python_version": "3.12"
-}

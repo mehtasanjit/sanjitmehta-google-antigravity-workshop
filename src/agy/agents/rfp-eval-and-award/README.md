@@ -15,6 +15,7 @@ All supplier names, vendor IDs, quotes, prices, and policy rules in this directo
 ```text
 rfp-eval-and-award/
 ├── README.md
+├── prompts.md                           # Staged workshop build prompts (ADK & LangGraph) + live buyer turns
 ├── setup-workspace.sh                   # Creates numbered isolated workspace (rfp-eval-and-award-1, ...)
 ├── docs/
 │   ├── agent_requirements.md            # Full agent spec, schema, scoring rules, ground truth
@@ -90,17 +91,17 @@ Copy the printed `gs://<bucket>/rfp-eval-and-award/` URI for use when testing th
 
 ### Step 2: Create a Fresh Workshop Workspace
 
-Run `./setup-workspace.sh` from this directory (`src/agy/agents/rfp-eval-and-award/`) to create the next numbered workspace (`rfp-eval-and-award-1`, `rfp-eval-and-award-2`, and so on) pre-populated with `AGENTS.md` and `.agents/rules/workspace-memory.md`:
+Run `./setup-workspace.sh` from this directory (`src/agy/agents/rfp-eval-and-award/`) to create the next numbered workspace (`rfp-eval-and-award-1`, `rfp-eval-and-award-2`, and so on) with two empty directories (`adk/` and `langgraph/`):
 
 ```bash
 ./setup-workspace.sh --dry-run
 ./setup-workspace.sh
 ```
 
-Open the created workspace in Google Antigravity, read `AGENTS.md`, and then:
+Open `adk/` or `langgraph/` in Google Antigravity, then follow the staged prompts in [`prompts.md`](prompts.md):
 
 1. Point Antigravity to [`docs/agent_requirements.md`](docs/agent_requirements.md) and your `gs://<bucket>/rfp-eval-and-award/` URI.
-2. Scaffold the project with `agents-cli create` (native ADK Python or LangGraph) and implement the parallel extraction + deterministic scoring workflow.
+2. Scaffold inside `adk/` (`agents-cli scaffold create rfp-eval-adk --agent adk_python ...`) or inside `langgraph/` (`agents-cli scaffold create rfp-eval-langgraph --agent google/agents-cli-extensions/core/langchain/template ...`) and implement the parallel extraction + deterministic scoring workflow.
 3. Test interactively with `agents-cli playground` and run pre-deployment evaluations with `agents-cli eval run` and `agents-cli eval dataset synthesize`.
 4. Deploy to Gemini Enterprise Agent Platform with `agents-cli deploy` and inspect traces, offline evaluations, and `Simulate sessions` in Google Cloud Console.
 
