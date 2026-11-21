@@ -1,954 +1,873 @@
-"""Pure deterministic Python engine for landed-cost math, compliance gates, 100-pt scoring, and PO gates."""
+"""Deterministic Python procurement normalization, compliance, scoring, and award engine.
+
+Uses decimal.Decimal exclusively for all currency, FX, surcharge, rebate, tax,
+rubric scoring, what-if rescoring, and PO total calculations. Zero LLM arithmetic.
+"""
 
 from __future__ import annotations
 
-import datetime
-import math
-from decimal import ROUND_HALF_UP, Decimal
+from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
+from math import ceil
+from typing import Any
 
 from app.models import (
-    ComplianceCheckDetail,
-    ComplianceStatus,
-    CostBreakdown,
     EvaluatedBid,
-    EvaluationReport,
-    ManagerSignOffRequest,
-    PostSelectionDecision,
+    EvaluationSummary,
+    ExtractedBid,
     ProcurementPolicy,
-    PurchaseOrderDraft,
     ScoreBreakdown,
-    ScoringWeights,
-    SupplierBidIntake,
-    SupplierClarificationDraft,
 )
 
 TWO_PLACES = Decimal("0.01")
-ONE_PLACE = Decimal("0.1")
+FOUR_PLACES = Decimal("0.0001")
+HUNDRED = Decimal("100")
+
+REQUIRED_RUBRIC_KEYS = (
+    "net_landed_cost",
+    "delivery_speed",
+    "warranty_months",
+    "supplier_track_record",
+    "payment_terms",
+)
 
 
-def _d(value: float | int | str | Decimal) -> Decimal:
-    return value if isinstance(value, Decimal) else Decimal(str(value))
+def _d(value: int | float | str | Decimal) -> Decimal:
+    """Converts numeric input to Decimal via string to avoid binary float artifacts."""
+    if isinstance(value, Decimal):
+        return value
+    return Decimal(str(value))
 
 
-def _round2(value: Decimal) -> Decimal:
+def _q2(value: Decimal) -> Decimal:
+    """Rounds a Decimal to 2 decimal places using standard half-up rounding."""
     return value.quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
 
 
-def _round1(value: Decimal) -> Decimal:
-    return value.quantize(ONE_PLACE, rounding=ROUND_HALF_UP)
+def _fmt2(value: Decimal) -> str:
+    """Formats a Decimal to 2 decimal places."""
+    return f"{_q2(value):.2f}"
 
 
-def _pct_to_rate(pct: float | None) -> Decimal:
-    """Convert percentage points (e.g., 8.0 -> 0.08) or fraction (0.08 -> 0.08) into a Decimal rate."""
-    if pct is None or pct <= 0:
-        return Decimal("0")
-    dec = _d(pct)
-    if dec < Decimal("1"):
-        return dec
-    return dec / Decimal("100")
+def _parse_iso_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value.strip())
+    except ValueError:
+        return None
 
 
-def compute_landed_cost(
-    intake: SupplierBidIntake,
-    policy: ProcurementPolicy,
-) -> CostBreakdown:
-    """Normalize a supplier bid into exact net landed USD and gross cash outlay USD."""
-    req_qty = policy.rfp_metadata.required_quantity
-    if req_qty <= 0:
-        raise ValueError(f"required_quantity must be positive, got {req_qty}")
-
-    if intake.currency not in policy.fx_rates_to_usd:
-        raise ValueError(f"Unsupported currency {intake.currency!r} not in policy fx_rates_to_usd.")
-
-    has_carton_basis = any(item.basis == "per_carton" for item in intake.mandatory_line_items)
-    if (
-        intake.pricing_structure == "carton_moq" or has_carton_basis
-    ) and intake.units_per_carton:
-        if intake.units_per_carton <= 0:
-            raise ValueError(f"Invalid units_per_carton: {intake.units_per_carton}")
-        cartons_ordered: int | None = math.ceil(req_qty / intake.units_per_carton)
-        units_ordered = cartons_ordered * intake.units_per_carton
-        spare_units = units_ordered - req_qty
-    elif intake.units_per_carton and intake.units_per_carton > 0 and has_carton_basis:
-        cartons_ordered = math.ceil(req_qty / intake.units_per_carton)
-        units_ordered = cartons_ordered * intake.units_per_carton
-        spare_units = units_ordered - req_qty
-    else:
-        cartons_ordered = None
-        units_ordered = req_qty
-        spare_units = 0
-
-    if not intake.mandatory_line_items:
-        raise ValueError(f"Proposal {intake.source_file} has no mandatory_line_items.")
-
-    base_subtotal = Decimal("0")
-    for item in intake.mandatory_line_items:
-        price = _d(item.price_in_source_currency)
-        if item.basis == "per_unit":
-            base_subtotal += _d(req_qty) * price
-        elif item.basis == "per_carton":
-            if cartons_ordered is None:
-                raise ValueError(
-                    f"per_carton item in {intake.source_file} requires positive units_per_carton."
-                )
-            base_subtotal += _d(cartons_ordered) * price
-        elif item.basis == "flat_order":
-            qty = item.quantity if (item.quantity is not None and item.quantity > 0) else 1
-            base_subtotal += _d(qty) * price
-        elif item.basis == "slab":
-            if item.from_unit is None or item.to_unit is None:
-                raise ValueError(
-                    f"Slab item in {intake.source_file} requires from_unit and to_unit bounds."
-                )
-            if item.to_unit < item.from_unit or item.from_unit < 1:
-                raise ValueError(
-                    f"Invalid slab bounds [{item.from_unit}, {item.to_unit}] in {intake.source_file}."
-                )
-            units_in_slab = max(0, min(req_qty, item.to_unit) - item.from_unit + 1)
-            base_subtotal += _d(units_in_slab) * price
-        else:
-            raise ValueError(f"Unsupported line item basis: {item.basis!r}")
-
-    # Optional line items are excluded when policy.normalization_rules.exclude_optional_line_items is True.
-    if not policy.normalization_rules.exclude_optional_line_items:
-        for opt in intake.optional_line_items:
-            opt_price = _d(opt.price_in_source_currency)
-            if opt.basis == "per_unit":
-                base_subtotal += _d(req_qty) * opt_price
-            elif opt.basis == "per_carton" and cartons_ordered is not None:
-                base_subtotal += _d(cartons_ordered) * opt_price
-            else:
-                base_subtotal += _d(max(1, opt.quantity)) * opt_price
-
-    # Automatic volume rebate when carton count meets threshold
-    rebate_rate = _pct_to_rate(intake.volume_rebate_pct)
-    rebate_eligible = rebate_rate > Decimal("0") and (
-        intake.volume_rebate_min_cartons is None
-        or (
-            cartons_ordered is not None
-            and cartons_ordered >= intake.volume_rebate_min_cartons
-        )
-    )
-    volume_rebate_source = base_subtotal * rebate_rate if rebate_eligible else Decimal("0")
-    after_rebate = base_subtotal - volume_rebate_source
-
-    # Mandatory expedited freight / percentage surcharge
-    surcharge_rate = _pct_to_rate(intake.surcharge_pct)
-    surcharge_source = after_rebate * surcharge_rate
-    after_surcharge = after_rebate + surcharge_source
-
-    # EXW Shenzhen +18% adder (12% customs duty + 6% international air freight)
-    is_exw = "exw" in intake.incoterm.strip().lower()
-    exw_rate = (
-        _d(policy.normalization_rules.exw_shenzhen_adder_pct) if is_exw else Decimal("0")
-    )
-    exw_adder_source = after_surcharge * exw_rate
-    net_landed_source_exact = after_surcharge + exw_adder_source
-
-    # GST / VAT handling: exclude recoverable Indian GST ITC from net landed USD comparison
-    gst_rate = _pct_to_rate(intake.gst_or_vat_pct)
-    fx_rate = _d(policy.fx_rates_to_usd[intake.currency])
-
-    if gst_rate > Decimal("0"):
-        if intake.tax_recoverable_itc and policy.normalization_rules.india_gst_recoverable_itc:
-            net_landed_usd_dec = _round2(net_landed_source_exact * fx_rate)
-            recoverable_gst_usd_dec = _round2(net_landed_usd_dec * gst_rate)
-            gross_cash_outlay_usd_dec = _round2(net_landed_usd_dec + recoverable_gst_usd_dec)
-        else:
-            net_landed_source_exact = net_landed_source_exact * (Decimal("1") + gst_rate)
-            net_landed_usd_dec = _round2(net_landed_source_exact * fx_rate)
-            recoverable_gst_usd_dec = Decimal("0.00")
-            gross_cash_outlay_usd_dec = net_landed_usd_dec
-    else:
-        net_landed_usd_dec = _round2(net_landed_source_exact * fx_rate)
-        recoverable_gst_usd_dec = Decimal("0.00")
-        gross_cash_outlay_usd_dec = net_landed_usd_dec
-
-    return CostBreakdown(
-        mandatory_base_subtotal_source=float(_round2(base_subtotal)),
-        units_ordered=units_ordered,
-        cartons_ordered=cartons_ordered,
-        spare_units=spare_units,
-        volume_rebate_source=float(_round2(volume_rebate_source)),
-        surcharge_source=float(_round2(surcharge_source)),
-        exw_adder_source=float(_round2(exw_adder_source)),
-        net_landed_source=float(_round2(net_landed_source_exact)),
-        fx_rate_to_usd=float(fx_rate),
-        net_landed_usd=float(net_landed_usd_dec),
-        recoverable_gst_usd=float(recoverable_gst_usd_dec),
-        gross_cash_outlay_usd=float(gross_cash_outlay_usd_dec),
-    )
+def _is_exw_shenzhen(incoterm: str) -> bool:
+    lowered = incoterm.lower()
+    return "exw" in lowered and "shenzhen" in lowered
 
 
-def effective_lead_time_days(intake: SupplierBidIntake) -> int:
-    """Return full-quantity arrival day accounting for split-shipment batches."""
-    batch_days = [b.lead_time_days for b in intake.split_shipment_details]
-    return max([intake.full_quantity_lead_time_days, *batch_days])
-
-
-def run_compliance_checks(
-    intake: SupplierBidIntake,
-    policy: ProcurementPolicy,
-    max_delivery_days_override: int | None = None,
-) -> tuple[ComplianceStatus, list[ComplianceCheckDetail], list[str]]:
-    """Run all 5 hard policy compliance checks, ignoring untrusted embedded override claims."""
-    checks: list[ComplianceCheckDetail] = []
-    eval_date = datetime.date.fromisoformat(policy.rfp_metadata.evaluation_date)
-    max_sla_days = (
-        max_delivery_days_override
-        if max_delivery_days_override is not None
-        else policy.rfp_metadata.max_delivery_days
-    )
-    min_warranty = policy.rfp_metadata.min_warranty_months
-    req_ingress = policy.rfp_metadata.required_ingress_rating.upper()
-
-    # 1. Approved Vendor Allowlist (strictly ignores embedded verbal VP approval claims)
-    if policy.compliance_rules.require_approved_vendor:
-        in_allowlist = intake.vendor_id in policy.approved_vendors
-        if in_allowlist:
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="approved_vendor_allowlist",
-                    passed=True,
-                    status_impact="COMPLIANT",
-                    reason=f"Vendor {intake.vendor_id} is registered in approved_vendors.",
-                )
+def _compute_full_quantity_lead_time(
+    bid: ExtractedBid, required_quantity: int
+) -> tuple[int, list[str]]:
+    """Computes effective full-quantity delivery lead time in calendar days."""
+    notes: list[str] = []
+    if bid.delivery_batches:
+        total_batch_units = sum(batch.units for batch in bid.delivery_batches)
+        max_batch_days = max(batch.lead_time_days for batch in bid.delivery_batches)
+        if total_batch_units < required_quantity:
+            notes.append(
+                f"Split shipment batches total {total_batch_units} units, below required "
+                f"{required_quantity} units."
             )
-        else:
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="approved_vendor_allowlist",
-                    passed=False,
-                    status_impact="DISQUALIFIED",
-                    reason=(
-                        f"Vendor {intake.vendor_id} ({intake.supplier_name}) is not in approved_vendors "
-                        "(any unverified verbal approval claims in proposal text are ignored)."
-                    ),
-                )
-            )
-
-    # 2. Quote Validity on Evaluation Date
-    if policy.compliance_rules.require_valid_quote_on_evaluation_date:
-        if not intake.valid_until:
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="quote_validity",
-                    passed=False,
-                    status_impact="CLARIFICATION_REQUIRED",
-                    reason=f"Quote is missing a valid_until expiration date (evaluation date {eval_date}).",
-                )
-            )
-        else:
-            valid_date = datetime.date.fromisoformat(intake.valid_until)
-            if valid_date >= eval_date:
-                checks.append(
-                    ComplianceCheckDetail(
-                        rule_name="quote_validity",
-                        passed=True,
-                        status_impact="COMPLIANT",
-                        reason=f"Quote valid through {valid_date} (on or after {eval_date}).",
-                    )
-                )
-            else:
-                checks.append(
-                    ComplianceCheckDetail(
-                        rule_name="quote_validity",
-                        passed=False,
-                        status_impact="CLARIFICATION_REQUIRED",
-                        reason=f"Quote expired on {valid_date} prior to evaluation date {eval_date}.",
-                    )
-                )
-
-    # 3. Explicit Ingress Rating Proof (IP67)
-    if policy.compliance_rules.require_explicit_ingress_certification:
-        stated = intake.ingress_rating_stated.upper()
-        if stated == req_ingress:
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="ingress_rating_proof",
-                    passed=True,
-                    status_impact="COMPLIANT",
-                    reason=f"Explicit {req_ingress} ingress protection confirmed.",
-                )
-            )
-        elif intake.ingress_rating_stated == "unverified":
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="ingress_rating_proof",
-                    passed=False,
-                    status_impact="CLARIFICATION_REQUIRED",
-                    reason=(
-                        f"Proposal uses vague outdoor/weather-resistant wording without upfront {req_ingress} "
-                        "certification proof."
-                    ),
-                )
-            )
-        else:
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="ingress_rating_proof",
-                    passed=False,
-                    status_impact="DISQUALIFIED",
-                    reason=(
-                        f"Quoted ingress rating {intake.ingress_rating_stated} does not meet mandatory "
-                        f"{req_ingress} requirement."
-                    ),
-                )
-            )
-
-    # 4. Full-Quantity Delivery SLA
-    lead_days = effective_lead_time_days(intake)
-    if policy.compliance_rules.full_quantity_must_meet_sla:
-        if lead_days <= max_sla_days:
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="full_quantity_delivery_sla",
-                    passed=True,
-                    status_impact="COMPLIANT",
-                    reason=f"Full 1,000-unit delivery in {lead_days} days meets <= {max_sla_days}-day SLA.",
-                )
-            )
-        else:
-            split_note = " (split shipment final batch)" if intake.split_shipment_details else ""
-            checks.append(
-                ComplianceCheckDetail(
-                    rule_name="full_quantity_delivery_sla",
-                    passed=False,
-                    status_impact="DISQUALIFIED",
-                    reason=(
-                        f"Full-quantity delivery arrives on day {lead_days}{split_note}, exceeding the "
-                        f"{max_sla_days}-day maximum SLA."
-                    ),
-                )
-            )
-
-    # 5. Minimum Warranty
-    if intake.warranty_months >= min_warranty:
-        checks.append(
-            ComplianceCheckDetail(
-                rule_name="minimum_warranty",
-                passed=True,
-                status_impact="COMPLIANT",
-                reason=f"{intake.warranty_months}-month warranty meets >= {min_warranty}-month minimum.",
-            )
-        )
-    else:
-        checks.append(
-            ComplianceCheckDetail(
-                rule_name="minimum_warranty",
-                passed=False,
-                status_impact="DISQUALIFIED",
-                reason=(
-                    f"{intake.warranty_months}-month warranty is below the mandatory "
-                    f"{min_warranty}-month minimum."
-                ),
-            )
-        )
-
-    failed = [c for c in checks if not c.passed]
-    filter_reasons = [c.reason for c in failed]
-    if any(c.status_impact == "DISQUALIFIED" for c in failed):
-        status: ComplianceStatus = "DISQUALIFIED"
-    elif any(c.status_impact == "CLARIFICATION_REQUIRED" for c in failed):
-        status = "CLARIFICATION_REQUIRED"
-    else:
-        status = "COMPLIANT"
-
-    return status, checks, filter_reasons
+        return max_batch_days, notes
+    return bid.lead_time_days, notes
 
 
-def resolve_scoring_weights(
-    default_weights: ScoringWeights,
-    weight_overrides: dict[str, float] | None = None,
-) -> ScoringWeights:
-    """Resolve runtime weight overrides.
+def _compute_native_pricing(
+    bid: ExtractedBid, policy: ProcurementPolicy
+) -> dict[str, Any]:
+    """Deterministically normalizes native currency subtotal, adders, rebates, and GST."""
+    required_qty = policy.rfp_metadata.required_quantity
+    exclude_optional = policy.normalization_rules.exclude_optional_line_items
 
-    - Partial overrides (e.g., {'net_landed_cost': 60}) proportionally scale the remaining
-      default weights so all 5 weights sum to 100.0.
-    - Explicit 5-weight overrides are validated to sum to 100.0 (or scaled from 1.0 if given as fractions).
-    """
-    if not weight_overrides:
-        return default_weights
+    adjustments: list[str] = []
+    excluded_optional: list[str] = []
+    quantity_billed = required_qty
 
-    base = default_weights.model_dump()
-    clean_overrides: dict[str, float] = {}
-    for key, val in weight_overrides.items():
-        if val is None:
-            continue
-        if key not in base:
-            raise ValueError(f"Unknown weight criterion {key!r}. Valid keys: {list(base.keys())}")
-        if val < 0:
-            raise ValueError(f"Weight for {key!r} must be non-negative, got {val}.")
-        clean_overrides[key] = float(val)
-
-    if not clean_overrides:
-        return default_weights
-
-    # Normalize fractional inputs (e.g. 0.60 instead of 60) if all supplied values are <= 1.0
-    if all(v <= 1.0 for v in clean_overrides.values()) and sum(clean_overrides.values()) <= 1.0001:
-        if len(clean_overrides) == len(base) and abs(sum(clean_overrides.values()) - 1.0) <= 1e-4:
-            clean_overrides = {k: v * 100.0 for k, v in clean_overrides.items()}
-        elif len(clean_overrides) < len(base) and any(0 < v < 1.0 for v in clean_overrides.values()):
-            clean_overrides = {k: v * 100.0 for k, v in clean_overrides.items()}
-
-    override_sum = sum(clean_overrides.values())
-    if len(clean_overrides) == len(base):
-        if abs(override_sum - 100.0) > 0.05:
+    # 1. Base mandatory subtotal in native currency
+    if bid.pricing_model == "carton":
+        if bid.carton_pricing is None:
             raise ValueError(
-                f"Explicit 5-criterion weight overrides must sum to 100.0, got {override_sum:.2f}."
+                f"Bid {bid.vendor_id} ({bid.source_filename}) uses pricing_model='carton' "
+                "but carton_pricing is missing."
             )
-        scale = 100.0 / override_sum
-        return ScoringWeights(**{k: round(v * scale, 4) for k, v in clean_overrides.items()})
+        cp = bid.carton_pricing
+        if cp.units_per_carton <= 0:
+            raise ValueError(f"Invalid units_per_carton={cp.units_per_carton} for {bid.vendor_id}")
 
-    if override_sum > 100.0001:
-        raise ValueError(
-            f"Partial weight overrides sum to {override_sum:.2f}, exceeding 100.0 total points."
+        if cp.round_up_to_whole_cartons:
+            cartons = ceil(required_qty / cp.units_per_carton)
+        else:
+            cartons = required_qty // cp.units_per_carton
+
+        quantity_billed = cartons * cp.units_per_carton
+        base_subtotal = _d(cartons) * _d(cp.price_per_carton)
+        adjustments.append(
+            f"Whole-carton rounding: {cartons} cartons x {cp.units_per_carton} units = "
+            f"{quantity_billed} units at {_fmt2(_d(cp.price_per_carton))} {bid.currency}/carton"
         )
 
-    remaining_budget = max(0.0, 100.0 - override_sum)
-    remaining_keys = [k for k in base if k not in clean_overrides]
-    remaining_default_sum = sum(base[k] for k in remaining_keys)
+        # Automatic volume rebate on carton subtotal
+        net_native = base_subtotal
+        if (
+            cp.volume_rebate_min_cartons is not None
+            and cartons >= cp.volume_rebate_min_cartons
+            and cp.volume_rebate_percent > 0
+        ):
+            rebate_rate = _d(cp.volume_rebate_percent) / HUNDRED
+            rebate_amount = base_subtotal * rebate_rate
+            net_native = base_subtotal - rebate_amount
+            adjustments.append(
+                f"Volume rebate ({cp.volume_rebate_percent:g}% for >= {cp.volume_rebate_min_cartons} "
+                f"cartons): -{_fmt2(rebate_amount)} {bid.currency}"
+            )
 
-    resolved: dict[str, float] = dict(clean_overrides)
-    if remaining_default_sum > 0:
-        for k in remaining_keys:
-            resolved[k] = round(base[k] * (remaining_budget / remaining_default_sum), 4)
-    else:
-        even_share = round(remaining_budget / len(remaining_keys), 4)
-        for k in remaining_keys:
-            resolved[k] = even_share
+    elif bid.pricing_model == "marginal_slabs":
+        if not bid.price_slabs:
+            raise ValueError(
+                f"Bid {bid.vendor_id} ({bid.source_filename}) uses pricing_model='marginal_slabs' "
+                "but price_slabs is empty."
+            )
+        base_subtotal = Decimal("0")
+        covered_units = 0
+        for slab in sorted(bid.price_slabs, key=lambda s: s.from_unit):
+            upper = min(required_qty, slab.to_unit)
+            if upper < slab.from_unit:
+                continue
+            slab_units = upper - slab.from_unit + 1
+            slab_cost = _d(slab_units) * _d(slab.unit_price)
+            base_subtotal += slab_cost
+            covered_units += slab_units
+            adjustments.append(
+                f"Marginal slab units {slab.from_unit}-{upper} ({slab_units} units x "
+                f"{_fmt2(_d(slab.unit_price))} {bid.currency}) = {_fmt2(slab_cost)} {bid.currency}"
+            )
+        if covered_units < required_qty:
+            raise ValueError(
+                f"Marginal slabs for {bid.vendor_id} only cover {covered_units}/{required_qty} units."
+            )
+        net_native = base_subtotal
 
-    return ScoringWeights(**resolved)
+    else:  # line_items
+        if not bid.line_items:
+            raise ValueError(
+                f"Bid {bid.vendor_id} ({bid.source_filename}) uses pricing_model='line_items' "
+                "but line_items is empty."
+            )
+        base_subtotal = Decimal("0")
+        for item in bid.line_items:
+            if not item.mandatory_for_rfp_spec and exclude_optional:
+                opt_total = (
+                    _d(required_qty) * _d(item.price)
+                    if item.unit_basis == "per_unit"
+                    else _d(item.quantity) * _d(item.price)
+                )
+                excluded_optional.append(
+                    f"{item.description} ({_fmt2(opt_total)} {bid.currency})"
+                )
+                continue
+
+            if item.unit_basis == "per_unit":
+                line_qty = required_qty
+                line_total = _d(line_qty) * _d(item.price)
+                adjustments.append(
+                    f"Mandatory line '{item.description}': {line_qty} x "
+                    f"{_fmt2(_d(item.price))} = {_fmt2(line_total)} {bid.currency}"
+                )
+            else:
+                line_qty = max(item.quantity, 1)
+                line_total = _d(line_qty) * _d(item.price)
+                adjustments.append(
+                    f"Mandatory flat line '{item.description}': {line_qty} x "
+                    f"{_fmt2(_d(item.price))} = {_fmt2(line_total)} {bid.currency}"
+                )
+            base_subtotal += line_total
+        net_native = base_subtotal
+
+    # 2. Required percentage surcharges (e.g., expedited air freight for SLA)
+    for surcharge in bid.percentage_surcharges:
+        if not surcharge.required_for_sla_or_spec:
+            continue
+        if surcharge.percent <= 0:
+            continue
+        rate = _d(surcharge.percent) / HUNDRED
+        surcharge_amount = net_native * rate
+        net_native += surcharge_amount
+        adjustments.append(
+            f"Mandatory surcharge '{surcharge.description}' ({surcharge.percent:g}%): "
+            f"+{_fmt2(surcharge_amount)} {bid.currency}"
+        )
+
+    # 3. EXW Shenzhen normalization adder from policy
+    if _is_exw_shenzhen(bid.incoterm):
+        adder_pct = _d(policy.normalization_rules.exw_shenzhen_adder_pct)
+        adder_amount = net_native * adder_pct
+        net_native += adder_amount
+        bd = policy.normalization_rules.exw_shenzhen_breakdown
+        adjustments.append(
+            f"EXW Shenzhen DDP normalization (+{adder_pct * HUNDRED:.0f}%: "
+            f"{_d(bd.customs_duty_pct) * HUNDRED:.0f}% customs duty + "
+            f"{_d(bd.international_air_freight_pct) * HUNDRED:.0f}% air freight): "
+            f"+{_fmt2(adder_amount)} {bid.currency}"
+        )
+
+    # 4. Recoverable Indian GST ITC handling (exclude from net landed comparison, report gross separately)
+    recoverable_tax_name: str | None = None
+    recoverable_tax_native: Decimal | None = None
+    gross_cash_outlay_native: Decimal | None = None
+
+    tax = bid.tax_details
+    if tax.tax_applicable and tax.tax_percent > 0:
+        tax_rate = _d(tax.tax_percent) / HUNDRED
+        is_recoverable = (
+            tax.recoverable_itc and policy.normalization_rules.india_gst_recoverable_itc
+        )
+        if is_recoverable:
+            recoverable_tax_name = tax.tax_name or "Indian GST (ITC Recoverable)"
+            if tax.prices_exclusive_of_tax:
+                recoverable_tax_native = net_native * tax_rate
+                gross_cash_outlay_native = net_native + recoverable_tax_native
+            else:
+                gross_cash_outlay_native = net_native
+                net_native = gross_cash_outlay_native / (Decimal("1") + tax_rate)
+                recoverable_tax_native = gross_cash_outlay_native - net_native
+            adjustments.append(
+                f"Excluded recoverable {recoverable_tax_name} ({tax.tax_percent:g}% ITC = "
+                f"{_fmt2(recoverable_tax_native)} {bid.currency}) from net landed comparison; "
+                f"gross cash outlay = {_fmt2(gross_cash_outlay_native)} {bid.currency}"
+            )
+        elif tax.prices_exclusive_of_tax:
+            non_recoverable_tax = net_native * tax_rate
+            net_native += non_recoverable_tax
+            adjustments.append(
+                f"Non-recoverable tax '{tax.tax_name}' ({tax.tax_percent:g}%): "
+                f"+{_fmt2(non_recoverable_tax)} {bid.currency}"
+            )
+
+    # 5. FX conversion to USD
+    if bid.currency not in policy.fx_rates_to_usd:
+        raise ValueError(
+            f"Currency '{bid.currency}' for {bid.vendor_id} is not defined in policy fx_rates_to_usd."
+        )
+    fx_rate = _d(policy.fx_rates_to_usd[bid.currency])
+    net_landed_usd = net_native * fx_rate
+    gross_cash_outlay_usd = (
+        gross_cash_outlay_native * fx_rate if gross_cash_outlay_native is not None else None
+    )
+    effective_unit_usd = net_landed_usd / _d(required_qty)
+
+    return {
+        "quantity_billed": quantity_billed,
+        "base_subtotal": base_subtotal,
+        "net_native": net_native,
+        "fx_rate": fx_rate,
+        "net_landed_usd": net_landed_usd,
+        "effective_unit_usd": effective_unit_usd,
+        "adjustments": adjustments,
+        "excluded_optional": excluded_optional,
+        "recoverable_tax_name": recoverable_tax_name,
+        "recoverable_tax_native": recoverable_tax_native,
+        "gross_cash_outlay_native": gross_cash_outlay_native,
+        "gross_cash_outlay_usd": gross_cash_outlay_usd,
+    }
 
 
-def _lookup_delivery_points(lead_days: int, policy: ProcurementPolicy) -> Decimal:
+def _classify_compliance(
+    bid: ExtractedBid,
+    full_lead_time_days: int,
+    batch_notes: list[str],
+    policy: ProcurementPolicy,
+) -> tuple[str, list[str], list[str], bool]:
+    """Deterministically classifies COMPLIANT, CLARIFICATION_REQUIRED, or DISQUALIFIED."""
+    rules = policy.compliance_rules
+    meta = policy.rfp_metadata
+    disqualify_reasons: list[str] = []
+    clarification_items: list[str] = []
+
+    verbal_ignored = bool(
+        bid.contains_unverified_verbal_approval_claim
+        and rules.ignore_unverified_verbal_approvals
+    )
+
+    # Hard Disqualification Checks
+    approved = bid.vendor_id in policy.approved_vendors
+    if rules.require_approved_vendor and not approved:
+        reason = (
+            f"Vendor ID '{bid.vendor_id}' ({bid.supplier_name}) is not in the approved vendor registry."
+        )
+        if verbal_ignored:
+            reason += " Unverified verbal pre-approval note ignored per procurement policy."
+        disqualify_reasons.append(reason)
+
+    if rules.full_quantity_must_meet_sla and full_lead_time_days > meta.max_delivery_days:
+        disqualify_reasons.append(
+            f"Full-quantity delivery lead time ({full_lead_time_days} days) exceeds maximum "
+            f"SLA of {meta.max_delivery_days} days."
+        )
+    disqualify_reasons.extend(batch_notes)
+
+    if bid.warranty_months < meta.min_warranty_months:
+        disqualify_reasons.append(
+            f"Warranty ({bid.warranty_months} months) is below minimum policy requirement "
+            f"of {meta.min_warranty_months} months."
+        )
+
+    # Clarification Checks (expired quote or missing explicit ingress certification)
+    eval_date = _parse_iso_date(meta.evaluation_date)
+    valid_until_date = _parse_iso_date(bid.valid_until)
+    if rules.require_valid_quote_on_evaluation_date and eval_date is not None:
+        if valid_until_date is None:
+            clarification_items.append(
+                f"Quote validity date is missing; must confirm validity on evaluation date {meta.evaluation_date}."
+            )
+        elif valid_until_date < eval_date:
+            clarification_items.append(
+                f"Quote expired on {bid.valid_until} (prior to evaluation date {meta.evaluation_date}); "
+                "requires written validity extension."
+            )
+
+    if rules.require_explicit_ingress_certification:
+        required_rating = meta.required_ingress_rating.upper()
+        stated = (bid.ingress_rating_stated or "").upper()
+        has_explicit_rating = bid.explicit_ingress_certified and (required_rating in stated)
+        if not has_explicit_rating:
+            clarification_items.append(
+                f"Missing explicit {meta.required_ingress_rating} ingress certification "
+                f"(stated: '{bid.ingress_rating_stated or 'unspecified'}'); requires formal "
+                f"{meta.required_ingress_rating} test certificate prior to award."
+            )
+
+    if disqualify_reasons:
+        all_reasons = disqualify_reasons + clarification_items
+        return "DISQUALIFIED", all_reasons, clarification_items, verbal_ignored
+
+    if clarification_items:
+        return "CLARIFICATION_REQUIRED", clarification_items, clarification_items, verbal_ignored
+
+    return "COMPLIANT", [], [], verbal_ignored
+
+
+def _score_delivery_speed(
+    lead_time_days: int, policy: ProcurementPolicy, weight: Decimal
+) -> Decimal:
+    default_weight = _d(policy.scoring_rubric.weights["delivery_speed"])
     brackets = sorted(policy.scoring_rubric.delivery_speed_brackets, key=lambda b: b.max_days)
+    raw_points = Decimal("0")
     for bracket in brackets:
-        if lead_days <= bracket.max_days:
-            return _d(bracket.points)
-    return _d(brackets[-1].points) if brackets else Decimal("0")
+        if lead_time_days <= bracket.max_days:
+            raw_points = _d(bracket.points)
+            break
+    if default_weight == 0:
+        return Decimal("0")
+    return (raw_points / default_weight) * weight
 
 
-def _lookup_warranty_points(warranty_months: int, policy: ProcurementPolicy) -> Decimal:
-    brackets = sorted(policy.scoring_rubric.warranty_brackets, key=lambda b: b.min_months, reverse=True)
+def _score_warranty(
+    warranty_months: int, policy: ProcurementPolicy, weight: Decimal
+) -> Decimal:
+    default_weight = _d(policy.scoring_rubric.weights["warranty_months"])
+    brackets = sorted(
+        policy.scoring_rubric.warranty_brackets, key=lambda b: b.min_months, reverse=True
+    )
+    raw_points = Decimal("0")
     for bracket in brackets:
         if warranty_months >= bracket.min_months:
-            return _d(bracket.points)
-    return Decimal("0")
-
-
-def _scale_bracket_points(
-    raw_points: Decimal,
-    active_weight: float,
-    default_weight: float,
-) -> Decimal:
-    if default_weight <= 0:
+            raw_points = _d(bracket.points)
+            break
+    if default_weight == 0:
         return Decimal("0")
-    return _round2(raw_points * (_d(active_weight) / _d(default_weight)))
+    return (raw_points / default_weight) * weight
 
 
-def _build_pros_and_cons(
-    bid: EvaluatedBid,
-    min_net_usd: float,
-    min_lead_days: int,
-    cap_usd: float,
-    rank_among_under_cap: int | None,
-) -> tuple[list[str], list[str]]:
-    pros: list[str] = []
-    cons: list[str] = []
+def _score_track_record(
+    tier_key: str | None, policy: ProcurementPolicy, weight: Decimal
+) -> Decimal:
+    default_weight = _d(policy.scoring_rubric.weights["supplier_track_record"])
+    tiers = policy.scoring_rubric.supplier_track_record_tiers
+    if not tier_key or tier_key not in tiers or default_weight == 0:
+        return Decimal("0")
+    raw_points = _d(tiers[tier_key].points)
+    return (raw_points / default_weight) * weight
 
-    if bid.rank == 1:
-        pros.append(f"#1 overall rubric score ({bid.score_breakdown.total_score:.1f}/100)")
-    if rank_among_under_cap == 1:
-        pros.append(f"#1 auto-approvable score under ${cap_usd:,.0f} cap")
-    if abs(bid.cost_breakdown.net_landed_usd - min_net_usd) < 0.01:
-        pros.append(f"Lowest net landed cost (${bid.cost_breakdown.net_landed_usd:,.2f} USD)")
-    if bid.full_quantity_lead_time_days == min_lead_days:
-        pros.append(f"Fastest delivery ({bid.full_quantity_lead_time_days} days)")
-    elif bid.full_quantity_lead_time_days <= 16:
-        pros.append(f"Fast {bid.full_quantity_lead_time_days}-day delivery")
 
-    if bid.warranty_months >= 36:
-        pros.append(f"Extended {bid.warranty_months}-month warranty")
+def _score_payment_terms(
+    payment_terms: str, policy: ProcurementPolicy, weight: Decimal
+) -> Decimal:
+    default_weight = _d(policy.scoring_rubric.weights["payment_terms"])
+    pts_map = policy.scoring_rubric.payment_terms_points
+    if payment_terms not in pts_map or default_weight == 0:
+        return Decimal("0")
+    raw_points = _d(pts_map[payment_terms])
+    return (raw_points / default_weight) * weight
 
-    if bid.vendor_profile:
-        vp = bid.vendor_profile
-        if vp.track_record_tier == "incumbent_high_otd":
-            otd_str = f"{vp.on_time_delivery_pct:.1f}% OTD" if vp.on_time_delivery_pct is not None else "high OTD"
-            pros.append(f"{vp.tenure_years:g}-year incumbent ({otd_str}, {vp.prior_pos} prior POs)")
-        elif vp.track_record_tier == "established_partner":
-            pros.append(f"Established partner ({vp.location}, {vp.prior_pos} prior POs)")
-        elif vp.track_record_tier == "new_onboarded":
-            cons.append("Newly onboarded supplier with 0 prior POs")
 
-    if bid.payment_terms in ("Net 90", "Net 60"):
-        note = f" ({bid.early_payment_discount_note})" if bid.early_payment_discount_note else ""
-        pros.append(f"Favorable {bid.payment_terms} payment terms{note}")
-    elif bid.payment_terms == "Net 30":
-        cons.append("Shorter Net 30 payment window")
+def validate_weights(
+    weights: dict[str, float | int | str | Decimal], total_points: float = 100.0
+) -> dict[str, Decimal]:
+    """Validates rubric weights cover all 5 criteria, are non-negative, and sum to total_points."""
+    missing = [k for k in REQUIRED_RUBRIC_KEYS if k not in weights]
+    extra = [k for k in weights if k not in REQUIRED_RUBRIC_KEYS]
+    if missing:
+        raise ValueError(f"Missing required scoring weight keys: {missing}")
+    if extra:
+        raise ValueError(f"Unknown scoring weight keys: {extra}")
 
-    if "ISO-14001" in bid.certifications or "ATEX" in bid.certifications:
-        extra = [c for c in bid.certifications if c in ("ATEX", "ISO-14001")]
-        pros.append(f"Additional certifications ({', '.join(extra)})")
+    dec_weights: dict[str, Decimal] = {}
+    weight_sum = Decimal("0")
+    for key in REQUIRED_RUBRIC_KEYS:
+        val = _d(weights[key])
+        if val < 0:
+            raise ValueError(f"Weight '{key}' cannot be negative: {val}")
+        dec_weights[key] = val
+        weight_sum += val
 
-    if bid.requires_manager_signoff_if_selected:
-        cons.append(
-            f"Exceeds ${cap_usd:,.0f} auto-approval cap by ${bid.overage_above_cap_usd:,.2f} "
-            "(requires manager sign-off if selected)"
+    expected_total = _d(total_points)
+    if weight_sum != expected_total:
+        raise ValueError(
+            f"Scoring weights must sum to {expected_total}, got {weight_sum}."
         )
-    if bid.cost_breakdown.spare_units > 0 and bid.cost_breakdown.cartons_ordered:
-        pros.append(
-            f"{bid.cost_breakdown.cartons_ordered} master cartons include "
-            f"{bid.cost_breakdown.spare_units} spare units"
-        )
-    if bid.cost_breakdown.recoverable_gst_usd > 0:
-        cons.append(
-            f"Higher upfront gross cash outlay (${bid.cost_breakdown.gross_cash_outlay_usd:,.2f} USD "
-            f"including recoverable GST ITC)"
-        )
-    if bid.full_quantity_lead_time_days >= 21:
-        cons.append(f"Longer {bid.full_quantity_lead_time_days}-day lead time")
-
-    return pros, cons
+    return dec_weights
 
 
-def evaluate_bids(
-    intakes: list[SupplierBidIntake],
+def _apply_rubric_scores(
+    compliant_bids: list[EvaluatedBid],
     policy: ProcurementPolicy,
-    weight_overrides: dict[str, float] | None = None,
-    max_delivery_days_override: int | None = None,
-    auto_approval_cap_override: float | None = None,
-) -> EvaluationReport:
-    """Run full deterministic cost normalization, compliance filtering, and 100-pt rubric scoring."""
-    if not intakes:
-        raise ValueError("Cannot evaluate an empty list of supplier bid intakes.")
+    weights: dict[str, Decimal],
+) -> tuple[list[EvaluatedBid], str | None]:
+    """Deterministically scores and ranks COMPLIANT bids using Decimal arithmetic."""
+    if not compliant_bids:
+        return [], None
 
-    default_weights = policy.scoring_rubric.weights
-    active_weights = resolve_scoring_weights(default_weights, weight_overrides)
-    effective_max_days = (
-        max_delivery_days_override
-        if max_delivery_days_override is not None
-        else policy.rfp_metadata.max_delivery_days
-    )
-    cap_usd = (
-        auto_approval_cap_override
-        if auto_approval_cap_override is not None
-        else policy.rfp_metadata.auto_approval_cap_usd
-    )
+    exact_costs = {b.vendor_id: _d(b.net_landed_usd) for b in compliant_bids}
+    min_cost = min(exact_costs.values())
 
-    preliminary: list[EvaluatedBid] = []
-    for intake in intakes:
-        cost = compute_landed_cost(intake, policy)
-        status, checks, reasons = run_compliance_checks(
-            intake,
-            policy,
-            max_delivery_days_override=effective_max_days,
+    scored: list[EvaluatedBid] = []
+    for bid in compliant_bids:
+        bid_cost = exact_costs[bid.vendor_id]
+        cost_pts = weights["net_landed_cost"] * (min_cost / bid_cost)
+        delivery_pts = _score_delivery_speed(
+            bid.full_quantity_lead_time_days, policy, weights["delivery_speed"]
         )
-        lead_days = effective_lead_time_days(intake)
-        overage = float(
-            max(Decimal("0.00"), _round2(_d(cost.net_landed_usd) - _d(cap_usd)))
+        warranty_pts = _score_warranty(
+            bid.warranty_months, policy, weights["warranty_months"]
         )
-        needs_signoff = status == "COMPLIANT" and cost.net_landed_usd > cap_usd
-
-        preliminary.append(
-            EvaluatedBid(
-                source_file=intake.source_file,
-                supplier_name=intake.supplier_name,
-                vendor_id=intake.vendor_id,
-                status=status,
-                requires_manager_signoff_if_selected=needs_signoff,
-                overage_above_cap_usd=overage if status == "COMPLIANT" else 0.0,
-                currency=intake.currency,
-                incoterm=intake.incoterm,
-                full_quantity_lead_time_days=lead_days,
-                warranty_months=intake.warranty_months,
-                payment_terms=intake.payment_terms,
-                early_payment_discount_note=intake.early_payment_discount_note,
-                certifications=list(intake.certifications),
-                vendor_profile=policy.approved_vendors.get(intake.vendor_id),
-                cost_breakdown=cost,
-                compliance_checks=checks,
-                filter_reasons=reasons,
-                audit_flags=intake.unusual_claims_or_notes,
-            )
+        track_pts = _score_track_record(
+            bid.track_record_tier, policy, weights["supplier_track_record"]
         )
+        payment_pts = _score_payment_terms(
+            bid.payment_terms, policy, weights["payment_terms"]
+        )
+        total_pts = cost_pts + delivery_pts + warranty_pts + track_pts + payment_pts
 
-    compliant = [b for b in preliminary if b.status == "COMPLIANT"]
-    filtered = [b for b in preliminary if b.status != "COMPLIANT"]
-    filtered.sort(
-        key=lambda b: (0 if b.status == "CLARIFICATION_REQUIRED" else 1, b.source_file)
+        breakdown = ScoreBreakdown(
+            net_landed_cost=float(_q2(cost_pts)),
+            delivery_speed=float(_q2(delivery_pts)),
+            warranty_months=float(_q2(warranty_pts)),
+            supplier_track_record=float(_q2(track_pts)),
+            payment_terms=float(_q2(payment_pts)),
+            total_score=float(_q2(total_pts)),
+        )
+        scored.append(bid.model_copy(update={"score_breakdown": breakdown}))
+
+    # Deterministic tie-breaking: highest total_score, then lowest net_landed_usd, then vendor_id
+    scored.sort(
+        key=lambda b: (
+            -_d(b.score_breakdown.total_score if b.score_breakdown else 0),
+            _d(b.net_landed_usd),
+            b.vendor_id,
+        )
     )
 
-    min_compliant_usd: float | None = None
-    if compliant:
-        min_dec = min(_d(b.cost_breakdown.net_landed_usd) for b in compliant)
-        min_compliant_usd = float(min_dec)
-        min_lead = min(b.full_quantity_lead_time_days for b in compliant)
+    ranked = [bid.model_copy(update={"rank": idx}) for idx, bid in enumerate(scored, start=1)]
+    return ranked, _fmt2(min_cost)
 
-        for bid in compliant:
-            bid_usd = _d(bid.cost_breakdown.net_landed_usd)
-            cost_pts = _round2(_d(active_weights.net_landed_cost) * (min_dec / bid_usd))
 
-            raw_deliv = _lookup_delivery_points(bid.full_quantity_lead_time_days, policy)
-            deliv_pts = _scale_bracket_points(
-                raw_deliv, active_weights.delivery_speed, default_weights.delivery_speed
-            )
+def evaluate_all_bids(
+    extracted_bids: list[ExtractedBid],
+    policy: ProcurementPolicy,
+    custom_weights: dict[str, float] | None = None,
+) -> EvaluationSummary:
+    """Runs complete deterministic normalization, compliance, and 100-pt scoring."""
+    raw_weights = custom_weights or policy.scoring_rubric.weights
+    dec_weights = validate_weights(raw_weights, policy.scoring_rubric.total_points)
 
-            raw_warr = _lookup_warranty_points(bid.warranty_months, policy)
-            warr_pts = _scale_bracket_points(
-                raw_warr, active_weights.warranty_months, default_weights.warranty_months
-            )
+    cap_usd = _d(policy.compliance_rules.manager_signoff_required_above_usd)
+    required_qty = policy.rfp_metadata.required_quantity
 
-            tier_key = bid.vendor_profile.track_record_tier if bid.vendor_profile else ""
-            if tier_key not in policy.scoring_rubric.supplier_track_record_tiers:
-                raise ValueError(
-                    f"Missing track_record_tier {tier_key!r} for compliant vendor {bid.vendor_id}."
-                )
-            raw_track = _d(policy.scoring_rubric.supplier_track_record_tiers[tier_key].points)
-            track_pts = _scale_bracket_points(
-                raw_track,
-                active_weights.supplier_track_record,
-                default_weights.supplier_track_record,
-            )
+    compliant: list[EvaluatedBid] = []
+    clarification: list[EvaluatedBid] = []
+    disqualified: list[EvaluatedBid] = []
 
-            if bid.payment_terms not in policy.scoring_rubric.payment_terms_points:
-                raise ValueError(f"Unsupported payment_terms {bid.payment_terms!r} on {bid.vendor_id}.")
-            raw_pay = _d(policy.scoring_rubric.payment_terms_points[bid.payment_terms])
-            pay_pts = _scale_bracket_points(
-                raw_pay, active_weights.payment_terms, default_weights.payment_terms
-            )
-
-            total_pts = _round1(cost_pts + deliv_pts + warr_pts + track_pts + pay_pts)
-            bid.score_breakdown = ScoreBreakdown(
-                net_landed_cost_points=float(cost_pts),
-                delivery_speed_points=float(deliv_pts),
-                warranty_points=float(warr_pts),
-                supplier_track_record_points=float(track_pts),
-                payment_terms_points=float(pay_pts),
-                total_score=float(total_pts),
-            )
-
-        compliant.sort(
-            key=lambda b: (
-                -(b.score_breakdown.total_score if b.score_breakdown else 0.0),
-                b.cost_breakdown.net_landed_usd,
-                b.full_quantity_lead_time_days,
-                b.vendor_id,
-            )
+    for bid in extracted_bids:
+        full_lead_days, batch_notes = _compute_full_quantity_lead_time(bid, required_qty)
+        pricing = _compute_native_pricing(bid, policy)
+        status, reasons, clar_items, verbal_ignored = _classify_compliance(
+            bid, full_lead_days, batch_notes, policy
         )
 
-        under_cap_counter = 0
-        for idx, bid in enumerate(compliant, start=1):
-            bid.rank = idx
-            under_cap_rank: int | None = None
-            if not bid.requires_manager_signoff_if_selected:
-                under_cap_counter += 1
-                under_cap_rank = under_cap_counter
-            pros, cons = _build_pros_and_cons(
-                bid=bid,
-                min_net_usd=min_compliant_usd,
-                min_lead_days=min_lead,
-                cap_usd=cap_usd,
-                rank_among_under_cap=under_cap_rank,
-            )
-            bid.pros = pros
-            bid.cons = cons
+        vendor_rec = policy.approved_vendors.get(bid.vendor_id)
+        net_usd: Decimal = pricing["net_landed_usd"]
+        over_cap = max(Decimal("0"), net_usd - cap_usd)
+        needs_signoff = net_usd > cap_usd
 
-    return EvaluationReport(
+        evaluated = EvaluatedBid(
+            vendor_id=bid.vendor_id,
+            supplier_name=bid.supplier_name,
+            source_filename=bid.source_filename,
+            currency=bid.currency,
+            incoterm=bid.incoterm,
+            compliance_status=status,
+            compliance_reasons=reasons,
+            clarification_items=clar_items,
+            verbal_approval_ignored=verbal_ignored,
+            native_mandatory_subtotal=_fmt2(pricing["base_subtotal"]),
+            native_adjustments_summary=pricing["adjustments"],
+            native_net_landed_total=_fmt2(pricing["net_native"]),
+            fx_rate_to_usd=str(pricing["fx_rate"]),
+            net_landed_usd=_fmt2(net_usd),
+            net_landed_usd_float=float(_q2(net_usd)),
+            effective_unit_cost_usd=_fmt2(pricing["effective_unit_usd"]),
+            quantity_billed=pricing["quantity_billed"],
+            excluded_optional_items=pricing["excluded_optional"],
+            recoverable_tax_name=pricing["recoverable_tax_name"],
+            recoverable_tax_native=(
+                _fmt2(pricing["recoverable_tax_native"])
+                if pricing["recoverable_tax_native"] is not None
+                else None
+            ),
+            gross_cash_outlay_native=(
+                _fmt2(pricing["gross_cash_outlay_native"])
+                if pricing["gross_cash_outlay_native"] is not None
+                else None
+            ),
+            gross_cash_outlay_usd=(
+                _fmt2(pricing["gross_cash_outlay_usd"])
+                if pricing["gross_cash_outlay_usd"] is not None
+                else None
+            ),
+            full_quantity_lead_time_days=full_lead_days,
+            warranty_months=bid.warranty_months,
+            payment_terms=bid.payment_terms,
+            early_payment_discount_note=bid.early_payment_discount_note,
+            valid_until=bid.valid_until,
+            ingress_rating_stated=bid.ingress_rating_stated,
+            explicit_ingress_certified=bid.explicit_ingress_certified,
+            certifications=bid.certifications,
+            commercial_notes=bid.commercial_notes,
+            approved_vendor=vendor_rec is not None,
+            vendor_location=vendor_rec.location if vendor_rec else None,
+            relationship_status=vendor_rec.relationship_status if vendor_rec else None,
+            track_record_tier=vendor_rec.track_record_tier if vendor_rec else None,
+            prior_pos=vendor_rec.prior_pos if vendor_rec else None,
+            on_time_delivery_pct=vendor_rec.on_time_delivery_pct if vendor_rec else None,
+            requires_manager_signoff=needs_signoff,
+            amount_over_cap_usd=_fmt2(over_cap),
+        )
+
+        if status == "COMPLIANT":
+            compliant.append(evaluated)
+        elif status == "CLARIFICATION_REQUIRED":
+            clarification.append(evaluated)
+        else:
+            disqualified.append(evaluated)
+
+    compliant_ranked, min_cost_str = _apply_rubric_scores(compliant, policy, dec_weights)
+    clarification.sort(key=lambda b: b.vendor_id)
+    disqualified.sort(key=lambda b: b.vendor_id)
+
+    all_by_id = {
+        b.vendor_id: b for b in (compliant_ranked + clarification + disqualified)
+    }
+
+    return EvaluationSummary(
         rfp_id=policy.rfp_metadata.rfp_id,
+        rfp_title=policy.rfp_metadata.title,
+        policy_version=policy.policy_version,
         evaluation_date=policy.rfp_metadata.evaluation_date,
-        required_quantity=policy.rfp_metadata.required_quantity,
-        max_delivery_days=effective_max_days,
-        auto_approval_cap_usd=cap_usd,
-        active_weights=active_weights,
-        min_compliant_net_landed_usd=min_compliant_usd,
-        compliant_finalists=compliant,
-        filtered_bids=filtered,
-        po_drafted=False,
-        manager_signoff_triggered=False,
+        required_quantity=required_qty,
+        auto_approval_cap_usd=_fmt2(cap_usd),
+        min_compliant_net_landed_usd=min_cost_str,
+        active_weights={k: float(v) for k, v in dec_weights.items()},
+        total_quotes_evaluated=len(all_by_id),
+        compliant_count=len(compliant_ranked),
+        clarification_required_count=len(clarification),
+        disqualified_count=len(disqualified),
+        compliant_ranked=compliant_ranked,
+        clarification_required=clarification,
+        disqualified=disqualified,
+        all_bids_by_vendor_id=all_by_id,
     )
 
 
-# ---------------------------------------------------------------------------
-# Post-Selection Routing, PO Drafting, Sign-Off, and Clarification Helpers
-# ---------------------------------------------------------------------------
+def rescore_cached_bids(
+    summary: EvaluationSummary,
+    policy: ProcurementPolicy,
+    new_weights: dict[str, float],
+) -> dict[str, Any]:
+    """Rescores cached COMPLIANT bids deterministically with zero GCS reads."""
+    dec_weights = validate_weights(new_weights, policy.scoring_rubric.total_points)
+    previous_ranks = {
+        b.vendor_id: {
+            "rank": b.rank,
+            "total_score": b.score_breakdown.total_score if b.score_breakdown else 0.0,
+        }
+        for b in summary.compliant_ranked
+    }
+
+    new_ranked, min_cost_str = _apply_rubric_scores(
+        summary.compliant_ranked, policy, dec_weights
+    )
+
+    rank_changes: list[dict[str, Any]] = []
+    for bid in new_ranked:
+        prev = previous_ranks.get(bid.vendor_id, {})
+        prev_rank = prev.get("rank")
+        prev_score = prev.get("total_score", 0.0)
+        new_score = bid.score_breakdown.total_score if bid.score_breakdown else 0.0
+        rank_delta = (prev_rank - bid.rank) if (prev_rank and bid.rank) else 0
+        score_delta = float(_q2(_d(new_score) - _d(prev_score)))
+        rank_changes.append(
+            {
+                "vendor_id": bid.vendor_id,
+                "supplier_name": bid.supplier_name,
+                "previous_rank": prev_rank,
+                "new_rank": bid.rank,
+                "rank_delta": rank_delta,
+                "previous_score": prev_score,
+                "new_score": new_score,
+                "score_delta": score_delta,
+                "net_landed_usd": bid.net_landed_usd,
+                "requires_manager_signoff": bid.requires_manager_signoff,
+                "score_breakdown": bid.score_breakdown.model_dump()
+                if bid.score_breakdown
+                else None,
+            }
+        )
+
+    return {
+        "status": "success",
+        "rfp_id": summary.rfp_id,
+        "min_compliant_net_landed_usd": min_cost_str,
+        "previous_weights": summary.active_weights,
+        "new_weights": {k: float(v) for k, v in dec_weights.items()},
+        "ranked_bids": [b.model_dump() for b in new_ranked],
+        "rank_changes": rank_changes,
+    }
 
 
-def find_bid_and_intake(
-    report: EvaluationReport,
-    intakes: list[SupplierBidIntake],
-    vendor_query: str,
-) -> tuple[EvaluatedBid, SupplierBidIntake]:
-    """Match a supplier by exact vendor_id or unambiguous supplier_name / source_file substring."""
-    q = vendor_query.strip().lower()
-    if not q:
-        raise ValueError("vendor_query must be non-empty.")
+def resolve_vendor_bid(
+    summary: EvaluationSummary, vendor_identifier: str
+) -> EvaluatedBid | None:
+    """Resolves a vendor by vendor_id or case-insensitive supplier name substring."""
+    query = vendor_identifier.strip()
+    if not query:
+        return None
+    upper = query.upper()
+    if upper in summary.all_bids_by_vendor_id:
+        return summary.all_bids_by_vendor_id[upper]
 
-    all_bids = [*report.compliant_finalists, *report.filtered_bids]
-    intake_by_file = {i.source_file: i for i in intakes}
-
-    for bid in all_bids:
-        if bid.vendor_id.lower() == q or bid.source_file.lower() == q:
-            return bid, intake_by_file[bid.source_file]
-
+    lower = query.lower()
     matches = [
         bid
-        for bid in all_bids
-        if q in bid.supplier_name.lower()
-        or q in bid.vendor_id.lower()
-        or q in bid.source_file.lower()
+        for bid in summary.all_bids_by_vendor_id.values()
+        if lower in bid.supplier_name.lower() or lower == bid.vendor_id.lower()
     ]
     if len(matches) == 1:
-        matched = matches[0]
-        return matched, intake_by_file[matched.source_file]
-    if len(matches) > 1:
-        names = ", ".join(f"{m.supplier_name} ({m.vendor_id})" for m in matches)
-        raise ValueError(f"Ambiguous vendor query {vendor_query!r}; matched: {names}")
-
-    valid = ", ".join(f"{b.supplier_name} ({b.vendor_id})" for b in all_bids)
-    raise ValueError(f"Unknown supplier {vendor_query!r}. Available bids: {valid}")
+        return matches[0]
+    return None
 
 
-def build_clarification_draft(
-    rfp_id: str,
-    bid: EvaluatedBid,
-) -> SupplierClarificationDraft:
-    """Build a structured Supplier Clarification Request for CLARIFICATION_REQUIRED bids."""
-    confirmations: list[str] = []
-    for check in bid.compliance_checks:
-        if not check.passed and check.rule_name == "quote_validity":
-            confirmations.append(
-                "Provide an updated signed quotation extending validity on or past the evaluation date "
-                "while holding quoted DDP Hyderabad pricing."
-            )
-        elif not check.passed and check.rule_name == "ingress_rating_proof":
-            confirmations.append(
-                "Submit a formal IEC 60529 IP67 laboratory test certificate confirming IP67 outdoor "
-                "ingress protection prior to award consideration."
-            )
-    if not confirmations:
-        confirmations.append("Provide written documentation resolving all open compliance items.")
-
-    return SupplierClarificationDraft(
-        rfp_id=rfp_id,
-        supplier_name=bid.supplier_name,
-        vendor_id=bid.vendor_id,
-        source_file=bid.source_file,
-        issues_identified=list(bid.filter_reasons),
-        requested_confirmations=confirmations,
-    )
-
-
-def _build_po_draft(
-    report: EvaluationReport,
-    bid: EvaluatedBid,
-    intake: SupplierBidIntake,
-    approval_basis: str,
-) -> PurchaseOrderDraft:
-    line_summaries: list[str] = []
-    for item in intake.mandatory_line_items:
-        sku_prefix = f"[{item.sku}] " if item.sku else ""
-        if item.basis == "per_unit":
-            line_summaries.append(
-                f"{sku_prefix}{item.description}: {report.required_quantity} units @ "
-                f"{item.price_in_source_currency:,.2f} {intake.currency}/unit"
-            )
-        elif item.basis == "per_carton":
-            line_summaries.append(
-                f"{sku_prefix}{item.description}: {bid.cost_breakdown.cartons_ordered} cartons "
-                f"({bid.cost_breakdown.units_ordered} units) @ "
-                f"{item.price_in_source_currency:,.2f} {intake.currency}/carton"
-            )
-        elif item.basis == "flat_order":
-            qty = item.quantity if (item.quantity is not None and item.quantity > 0) else 1
-            line_summaries.append(
-                f"{sku_prefix}{item.description}: {qty} flat order @ "
-                f"{item.price_in_source_currency:,.2f} {intake.currency}"
-            )
-        elif item.basis == "slab":
-            line_summaries.append(
-                f"{sku_prefix}{item.description}: units {item.from_unit}-{item.to_unit} @ "
-                f"{item.price_in_source_currency:,.2f} {intake.currency}/unit"
-            )
-
-    score_val = bid.score_breakdown.total_score if bid.score_breakdown else 0.0
-    return PurchaseOrderDraft(
-        po_reference=f"PO-{report.rfp_id}-{bid.vendor_id}",
-        rfp_id=report.rfp_id,
-        evaluation_date=report.evaluation_date,
-        supplier_name=bid.supplier_name,
-        vendor_id=bid.vendor_id,
-        incoterm=bid.incoterm,
-        units_ordered=bid.cost_breakdown.units_ordered,
-        cartons_ordered=bid.cost_breakdown.cartons_ordered,
-        spare_units=bid.cost_breakdown.spare_units,
-        lead_time_days=bid.full_quantity_lead_time_days,
-        warranty_months=bid.warranty_months,
-        payment_terms=bid.payment_terms,
-        early_payment_discount_note=bid.early_payment_discount_note,
-        source_currency=bid.currency,
-        net_landed_source=bid.cost_breakdown.net_landed_source,
-        net_landed_usd=bid.cost_breakdown.net_landed_usd,
-        recoverable_gst_usd=bid.cost_breakdown.recoverable_gst_usd,
-        gross_cash_outlay_usd=bid.cost_breakdown.gross_cash_outlay_usd,
-        rubric_score=score_val,
-        approval_basis=approval_basis,
-        line_items_summary=line_summaries,
-    )
-
-
-def evaluate_post_selection(
-    report: EvaluationReport,
-    intakes: list[SupplierBidIntake],
-    vendor_query: str,
-    buyer_justification: str | None = None,
-) -> PostSelectionDecision:
-    """Enforce deterministic post-selection policy gates on an explicit buyer choice."""
-    bid, intake = find_bid_and_intake(report, intakes, vendor_query)
-
-    # Branch 3: Disqualified or Clarification-Required -> Hard policy block (never draft PO)
-    if bid.status != "COMPLIANT":
-        clarification = (
-            build_clarification_draft(report.rfp_id, bid)
-            if bid.status == "CLARIFICATION_REQUIRED"
-            else None
-        )
-        compliant_names = ", ".join(
-            f"{c.supplier_name} ({c.vendor_id})" for c in report.compliant_finalists
-        )
-        return PostSelectionDecision(
-            outcome="POLICY_BLOCKED",
-            rfp_id=report.rfp_id,
-            vendor_id=bid.vendor_id,
-            supplier_name=bid.supplier_name,
-            compliance_status=bid.status,
-            po_drafted=False,
-            clarification_draft=clarification,
-            blocked_reasons=list(bid.filter_reasons),
-            summary_message=(
-                f"PO drafting blocked for {bid.supplier_name} ({bid.vendor_id}): status is {bid.status}. "
-                f"Procurement policy cannot be overridden by verbal claims or user prompts. "
-                f"Select a compliant finalist ({compliant_names})."
+def evaluate_award_gate(
+    summary: EvaluationSummary,
+    policy: ProcurementPolicy,
+    vendor_identifier: str,
+) -> dict[str, Any]:
+    """Evaluates buyer vendor selection against compliance and $50K cap rules."""
+    bid = resolve_vendor_bid(summary, vendor_identifier)
+    if bid is None:
+        return {
+            "decision": "NOT_FOUND",
+            "award_authorized": False,
+            "message": (
+                f"Could not uniquely match vendor '{vendor_identifier}'. "
+                f"Available vendor IDs: {sorted(summary.all_bids_by_vendor_id.keys())}."
             ),
-        )
+        }
 
-    cap = report.auto_approval_cap_usd
-    net_usd = bid.cost_breakdown.net_landed_usd
-    score_val = bid.score_breakdown.total_score if bid.score_breakdown else 0.0
-    rank_val = bid.rank or 1
+    cap_usd = _d(policy.compliance_rules.manager_signoff_required_above_usd)
+    bid_usd = _d(bid.net_landed_usd)
 
-    # Branch 1: Compliant and <= $50,000 net landed USD -> Direct PO draft
-    if net_usd <= cap:
-        basis = (
-            f"Auto-approved: compliant finalist at ${net_usd:,.2f} net landed USD "
-            f"(within ${cap:,.2f} auto-approval cap)."
-        )
-        po = _build_po_draft(report, bid, intake, approval_basis=basis)
-        return PostSelectionDecision(
-            outcome="DIRECT_PO_APPROVED",
-            rfp_id=report.rfp_id,
-            vendor_id=bid.vendor_id,
-            supplier_name=bid.supplier_name,
-            compliance_status="COMPLIANT",
-            po_drafted=True,
-            po_draft=po,
-            summary_message=(
-                f"Award Decision and PO Summary ({po.po_reference}) drafted directly for "
-                f"{bid.supplier_name} ({bid.vendor_id}) at ${net_usd:,.2f} net landed USD "
-                f"(<= ${cap:,.2f} cap; no manager sign-off required)."
+    if bid.compliance_status == "DISQUALIFIED":
+        return {
+            "decision": "BLOCKED_DISQUALIFIED",
+            "award_authorized": False,
+            "vendor_id": bid.vendor_id,
+            "supplier_name": bid.supplier_name,
+            "compliance_status": bid.compliance_status,
+            "reasons": bid.compliance_reasons,
+            "verbal_approval_ignored": bid.verbal_approval_ignored,
+            "message": (
+                f"Award blocked: {bid.supplier_name} ({bid.vendor_id}) is DISQUALIFIED. "
+                "Purchase Order cannot be drafted."
             ),
-        )
+        }
 
-    # Branch 2: Compliant and > $50,000 net landed USD -> Hold PO & trigger Manager Sign-Off
-    overage = float(_round2(_d(net_usd) - _d(cap)))
-    default_rationale = "; ".join(bid.pros) if bid.pros else f"Ranked #{rank_val} ({score_val:.1f}/100)"
-    rationale = (
-        f"{buyer_justification.strip()} ({default_rationale})"
-        if buyer_justification and buyer_justification.strip()
-        else default_rationale
-    )
-    signoff = ManagerSignOffRequest(
-        rfp_id=report.rfp_id,
-        supplier_name=bid.supplier_name,
-        vendor_id=bid.vendor_id,
-        net_landed_usd=net_usd,
-        gross_cash_outlay_usd=bid.cost_breakdown.gross_cash_outlay_usd,
-        auto_approval_cap_usd=cap,
-        overage_usd=overage,
-        rubric_score=score_val,
-        rank=rank_val,
-        lead_time_days=bid.full_quantity_lead_time_days,
-        warranty_months=bid.warranty_months,
-        payment_terms=bid.payment_terms,
-        business_justification=rationale,
-    )
-    return PostSelectionDecision(
-        outcome="MANAGER_SIGNOFF_REQUIRED",
-        rfp_id=report.rfp_id,
-        vendor_id=bid.vendor_id,
-        supplier_name=bid.supplier_name,
-        compliance_status="COMPLIANT",
-        po_drafted=False,
-        signoff_request=signoff,
-        summary_message=(
-            f"PO drafting held for {bid.supplier_name} ({bid.vendor_id}): net landed cost "
-            f"${net_usd:,.2f} exceeds the ${cap:,.2f} auto-approval cap by ${overage:,.2f}. "
-            "Manager Sign-Off Exception Request generated; explicit manager approval is required before drafting PO."
+    if bid.compliance_status == "CLARIFICATION_REQUIRED":
+        return {
+            "decision": "BLOCKED_CLARIFICATION_REQUIRED",
+            "award_authorized": False,
+            "vendor_id": bid.vendor_id,
+            "supplier_name": bid.supplier_name,
+            "compliance_status": bid.compliance_status,
+            "clarification_items": bid.clarification_items,
+            "net_landed_usd": bid.net_landed_usd,
+            "message": (
+                f"Award blocked: {bid.supplier_name} ({bid.vendor_id}) requires supplier "
+                "clarification before award. Draft a Supplier Clarification Request instead of a PO."
+            ),
+        }
+
+    if bid_usd > cap_usd:
+        over_cap = _fmt2(bid_usd - cap_usd)
+        return {
+            "decision": "MANAGER_SIGNOFF_REQUIRED",
+            "award_authorized": False,
+            "vendor_id": bid.vendor_id,
+            "supplier_name": bid.supplier_name,
+            "compliance_status": bid.compliance_status,
+            "net_landed_usd": bid.net_landed_usd,
+            "auto_approval_cap_usd": _fmt2(cap_usd),
+            "amount_over_cap_usd": over_cap,
+            "gross_cash_outlay_usd": bid.gross_cash_outlay_usd,
+            "gross_cash_outlay_native": bid.gross_cash_outlay_native,
+            "currency": bid.currency,
+            "native_net_landed_total": bid.native_net_landed_total,
+            "lead_time_days": bid.full_quantity_lead_time_days,
+            "warranty_months": bid.warranty_months,
+            "payment_terms": bid.payment_terms,
+            "score_total": bid.score_breakdown.total_score if bid.score_breakdown else None,
+            "rank": bid.rank,
+            "message": (
+                f"PO held: {bid.supplier_name} ({bid.vendor_id}) net landed total "
+                f"${bid.net_landed_usd} USD exceeds auto-approval cap of ${_fmt2(cap_usd)} USD "
+                f"by ${over_cap} USD. Manager sign-off is required before drafting a PO."
+            ),
+        }
+
+    return {
+        "decision": "AUTHORIZED_FOR_PO",
+        "award_authorized": True,
+        "vendor_id": bid.vendor_id,
+        "supplier_name": bid.supplier_name,
+        "compliance_status": bid.compliance_status,
+        "net_landed_usd": bid.net_landed_usd,
+        "auto_approval_cap_usd": _fmt2(cap_usd),
+        "gross_cash_outlay_usd": bid.gross_cash_outlay_usd,
+        "gross_cash_outlay_native": bid.gross_cash_outlay_native,
+        "currency": bid.currency,
+        "native_net_landed_total": bid.native_net_landed_total,
+        "message": (
+            f"Award authorized: {bid.supplier_name} ({bid.vendor_id}) is COMPLIANT and "
+            f"${bid.net_landed_usd} USD is within the ${_fmt2(cap_usd)} USD cap. "
+            "Ready for immediate PO drafting."
         ),
-    )
+    }
 
 
-def resolve_manager_signoff(
-    report: EvaluationReport,
-    intakes: list[SupplierBidIntake],
-    vendor_query: str,
-    approved: bool,
-    approver_note: str | None = None,
-) -> PostSelectionDecision:
-    """Complete or reject a pending >$50K manager sign-off gate."""
-    bid, intake = find_bid_and_intake(report, intakes, vendor_query)
-    if bid.status != "COMPLIANT":
-        return evaluate_post_selection(report, intakes, vendor_query)
-
-    cap = report.auto_approval_cap_usd
-    net_usd = bid.cost_breakdown.net_landed_usd
-    overage = float(max(Decimal("0.00"), _round2(_d(net_usd) - _d(cap))))
-
-    if not approved:
-        under_cap_options = ", ".join(
-            f"{c.supplier_name} ({c.vendor_id}, ${c.cost_breakdown.net_landed_usd:,.2f})"
-            for c in report.compliant_finalists
-            if c.cost_breakdown.net_landed_usd <= cap
-        )
-        return PostSelectionDecision(
-            outcome="MANAGER_SIGNOFF_REJECTED",
-            rfp_id=report.rfp_id,
-            vendor_id=bid.vendor_id,
-            supplier_name=bid.supplier_name,
-            compliance_status="COMPLIANT",
-            po_drafted=False,
-            summary_message=(
-                f"Manager sign-off declined for {bid.supplier_name} ({bid.vendor_id}). "
-                f"No PO was drafted. Please select another compliant finalist "
-                f"(auto-approvable <= ${cap:,.2f} options: {under_cap_options})."
+def assemble_po_payload(
+    summary: EvaluationSummary,
+    policy: ProcurementPolicy,
+    vendor_id: str,
+    award_authorized: bool,
+    manager_signoff: dict[str, Any] | None = None,
+    buyer_edits: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Builds a deterministic in-session Purchase Order payload only when award_authorized is True."""
+    if award_authorized is not True:
+        return {
+            "status": "BLOCKED",
+            "error": (
+                "Purchase Order generation denied: state['award_authorized'] is not True. "
+                "The buyer must select a compliant supplier and complete any required "
+                "manager sign-off (> $50,000 USD) through policy_signoff_agent first."
             ),
-        )
+        }
 
-    note_suffix = f" Note: {approver_note.strip()}" if approver_note and approver_note.strip() else ""
-    basis = (
-        f"Manager sign-off approved for ${overage:,.2f} overage above ${cap:,.2f} cap.{note_suffix}"
-    )
-    po = _build_po_draft(report, bid, intake, approval_basis=basis)
-    return PostSelectionDecision(
-        outcome="MANAGER_SIGNOFF_APPROVED_PO_DRAFTED",
-        rfp_id=report.rfp_id,
-        vendor_id=bid.vendor_id,
-        supplier_name=bid.supplier_name,
-        compliance_status="COMPLIANT",
-        po_drafted=True,
-        po_draft=po,
-        summary_message=(
-            f"Manager sign-off recorded for {bid.supplier_name} ({bid.vendor_id}). "
-            f"Award Decision and PO Summary ({po.po_reference}) drafted at ${net_usd:,.2f} net landed USD."
-        ),
-    )
+    bid = summary.all_bids_by_vendor_id.get(vendor_id)
+    if bid is None:
+        return {
+            "status": "BLOCKED",
+            "error": f"Selected vendor '{vendor_id}' not found in evaluated bids.",
+        }
+
+    if bid.compliance_status != "COMPLIANT":
+        return {
+            "status": "BLOCKED",
+            "error": (
+                f"Purchase Order generation denied: vendor '{vendor_id}' has status "
+                f"'{bid.compliance_status}', not COMPLIANT."
+            ),
+        }
+
+    cap_usd = _d(policy.compliance_rules.manager_signoff_required_above_usd)
+    bid_usd = _d(bid.net_landed_usd)
+    if bid_usd > cap_usd and not (manager_signoff and manager_signoff.get("approved") is True):
+        return {
+            "status": "BLOCKED",
+            "error": (
+                f"Purchase Order generation denied: ${bid.net_landed_usd} USD exceeds "
+                f"${_fmt2(cap_usd)} USD cap and manager sign-off has not been recorded."
+            ),
+        }
+
+    edits = buyer_edits or {}
+    return {
+        "status": "DRAFT_READY",
+        "po_mode": "IN_SESSION_DRAFT_ONLY",
+        "po_reference": f"PO-DRAFT-{policy.rfp_metadata.rfp_id}-{bid.vendor_id}",
+        "rfp_id": policy.rfp_metadata.rfp_id,
+        "rfp_title": policy.rfp_metadata.title,
+        "policy_version": policy.policy_version,
+        "supplier_name": bid.supplier_name,
+        "vendor_id": bid.vendor_id,
+        "vendor_location": bid.vendor_location,
+        "incoterm": bid.incoterm,
+        "required_quantity": policy.rfp_metadata.required_quantity,
+        "quantity_billed": bid.quantity_billed,
+        "currency": bid.currency,
+        "native_mandatory_subtotal": bid.native_mandatory_subtotal,
+        "native_net_landed_total": bid.native_net_landed_total,
+        "fx_rate_to_usd": bid.fx_rate_to_usd,
+        "net_landed_usd": bid.net_landed_usd,
+        "effective_unit_cost_usd": bid.effective_unit_cost_usd,
+        "pricing_breakdown": bid.native_adjustments_summary,
+        "excluded_optional_items": bid.excluded_optional_items,
+        "recoverable_tax_name": bid.recoverable_tax_name,
+        "recoverable_tax_native": bid.recoverable_tax_native,
+        "gross_cash_outlay_native": bid.gross_cash_outlay_native,
+        "gross_cash_outlay_usd": bid.gross_cash_outlay_usd,
+        "delivery_sla_days": bid.full_quantity_lead_time_days,
+        "warranty_months": bid.warranty_months,
+        "payment_terms": bid.payment_terms,
+        "early_payment_discount_note": bid.early_payment_discount_note,
+        "certifications": bid.certifications,
+        "requires_manager_signoff": bid.requires_manager_signoff,
+        "manager_signoff": manager_signoff,
+        "buyer_metadata": {
+            "ship_to_location": edits.get("ship_to_location", "Hyderabad Plant Receiving Dock"),
+            "ship_to_contact": edits.get("ship_to_contact", "Procurement Receiving Team"),
+            "cost_center": edits.get("cost_center", "TBD-BUYER-COST-CENTER"),
+            "billing_instructions": edits.get(
+                "billing_instructions",
+                "Reference PO draft number and RFP-2026-441 on all invoices and shipping docs.",
+            ),
+            "special_delivery_notes": edits.get("special_delivery_notes", "None"),
+        },
+    }

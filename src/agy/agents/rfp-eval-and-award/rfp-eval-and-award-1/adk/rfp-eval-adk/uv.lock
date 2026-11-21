@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11, <3.14"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'win32'",
@@ -139,9 +139,9 @@ name = "aiologic"
 version = "0.17.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sniffio" },
-    { name = "typing-extensions" },
-    { name = "wrapt" },
+    { name = "sniffio", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "wrapt", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f1/7a/d51f2fde1e8ae8a83431f8e97b7a71e9358cdb1d4d2ce6be387fa44d68de/aiologic-0.17.1.tar.gz", hash = "sha256:2e1b93b9e88ced318c2a63ad7b382688f40cbfe40e3d42258d49dc9c5aea179d", size = 252354, upload-time = "2026-06-27T20:41:33.25Z" }
 wheels = [
@@ -485,8 +485,8 @@ name = "culsans"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "aiologic" },
-    { name = "typing-extensions" },
+    { name = "aiologic", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d9/e3/49afa1bc180e0d28008ec6bcdf82a4072d1c7a41032b5b759b60814ca4b0/culsans-0.11.0.tar.gz", hash = "sha256:0b43d0d05dce6106293d114c86e3fb4bfc63088cfe8ff08ed3fe36891447fe33", size = 107546, upload-time = "2025-12-31T23:15:38.196Z" }
 wheels = [
@@ -1054,7 +1054,7 @@ wheels = [
 
 [[package]]
 name = "google-cloud-eventarc-publishing"
-version = "0.10.2"
+version = "0.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core", extra = ["grpc"] },
@@ -1063,9 +1063,9 @@ dependencies = [
     { name = "proto-plus" },
     { name = "protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/f0/871113a89255c5faf45d41416b3f0904de4fa9ff49230649cc2d43f2a111/google_cloud_eventarc_publishing-0.10.2.tar.gz", hash = "sha256:3c820a2c71f37914ae8c61b88fc5f3b1bb145bdbfdbad50345d80d73af3a0b78", size = 53604, upload-time = "2026-10-01T18:16:30.13Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/95/9460d80b813834796ca747f27bc017409e7ec424af4c2e362b61118f93e5/google_cloud_eventarc_publishing-0.10.1.tar.gz", hash = "sha256:dad93d1c203b85ab1eec9a66b5353ae4031e0f80940d25d77680f4eb4c66611d", size = 53448, upload-time = "2026-06-22T23:21:13.572Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/24/6709161167929f14fc8f4ab99365d1d5ea7c2b945a1901474f7513c4d350/google_cloud_eventarc_publishing-0.10.2-py3-none-any.whl", hash = "sha256:e5a6797e120be25b41155a749c34b734a3df060a03797ab7d5ed3e8c57eedff6", size = 57498, upload-time = "2026-10-01T18:10:12.003Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/50/41702a07dce11731ebfe0c4cf031470a20449ac417646d6c26211987ec4a/google_cloud_eventarc_publishing-0.10.1-py3-none-any.whl", hash = "sha256:6ac3ddb148da8e93ba06492794af6c9f4c99b357a3a14edbb48ca3e1464dca1e", size = 56787, upload-time = "2026-06-22T23:18:53.208Z" },
 ]
 
 [[package]]
@@ -1792,68 +1792,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2d/f0/5254dc371d87f5bfe22dfa12b7245f54d5cd80e69a97835fd49429d09005/litellm-1.106.9-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:045488522fd323d0f45e90248102429c6318f0351310c3004df801e0315217cc", size = 36591600, upload-time = "2026-11-12T00:46:39.046Z" },
     { url = "https://files.pythonhosted.org/packages/ec/db/69ab1ae429d6c3e3276367b59e08825cdfb9b40d9b70ab35d6019e91e7d2/litellm-1.106.9-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:1959c53ca74da2fbd6c57c14ce95ff26605f51f42295eea5a37ed735216545e8", size = 37309225, upload-time = "2026-11-12T00:46:42.187Z" },
     { url = "https://files.pythonhosted.org/packages/95/b9/e8f3acdbb9bacefa80654719a98f46b0e274e7cfba7a891e02b9b9413371/litellm-1.106.9-cp310-abi3-win_amd64.whl", hash = "sha256:8cc43ef32592381fa79739ed6c1ed10466f282a84483a7e77ce8379dcd7a166b", size = 38369280, upload-time = "2026-11-12T00:46:45.552Z" },
-]
-
-[[package]]
-name = "rfp-eval-adk"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "a2a-sdk", extra = ["http-server"] },
-    { name = "aiohttp" },
-    { name = "fastapi" },
-    { name = "gcsfs" },
-    { name = "google-adk", extra = ["bigquery-analytics", "gcp", "otel-gcp"] },
-    { name = "google-cloud-agentplatform", extra = ["agent-engines"] },
-    { name = "google-cloud-aiplatform", extra = ["evaluation"] },
-    { name = "google-cloud-logging" },
-    { name = "opentelemetry-resourcedetector-gcp" },
-    { name = "protobuf" },
-]
-
-[package.optional-dependencies]
-eval = [
-    { name = "google-adk", extra = ["eval"] },
-    { name = "google-cloud-aiplatform", extra = ["evaluation"] },
-]
-lint = [
-    { name = "codespell" },
-    { name = "ruff" },
-    { name = "ty" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "nest-asyncio" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "a2a-sdk", extras = ["http-server"], specifier = ">=1.0,<2" },
-    { name = "aiohttp", specifier = ">=3.13.4" },
-    { name = "codespell", marker = "extra == 'lint'", specifier = ">=2.2.0,<3.0.0" },
-    { name = "fastapi", specifier = "<0.142.0" },
-    { name = "gcsfs", specifier = ">=2026.10.0" },
-    { name = "google-adk", extras = ["eval"], marker = "extra == 'eval'", specifier = ">=2.12.0,<3.0.0" },
-    { name = "google-adk", extras = ["gcp", "otel-gcp", "bigquery-analytics"], specifier = ">=2.12.0,<3.0.0" },
-    { name = "google-cloud-agentplatform", extras = ["agent-engines"], specifier = ">=2.2.0,<3.0.0" },
-    { name = "google-cloud-aiplatform", extras = ["evaluation"], specifier = ">=2.2.0,<3.0.0" },
-    { name = "google-cloud-aiplatform", extras = ["evaluation"], marker = "extra == 'eval'", specifier = ">=2.2.0,<3.0.0" },
-    { name = "google-cloud-logging", specifier = ">=3.12.0,<4.0.0" },
-    { name = "opentelemetry-resourcedetector-gcp", specifier = "<=1.12.0a0" },
-    { name = "protobuf", specifier = ">=6.31.1,<7.0.0" },
-    { name = "ruff", marker = "extra == 'lint'", specifier = ">=0.4.6,<1.0.0" },
-    { name = "ty", marker = "extra == 'lint'", specifier = ">=0.0.1a0" },
-]
-provides-extras = ["eval", "lint"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "nest-asyncio", specifier = ">=1.6.0,<2.0.0" },
-    { name = "pytest", specifier = ">=9.0.2,<10.0.0" },
-    { name = "pytest-asyncio", specifier = ">=1.0.0,<2.0.0" },
 ]
 
 [[package]]
@@ -3001,6 +2939,68 @@ wheels = [
 ]
 
 [[package]]
+name = "rfp-eval-adk"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "a2a-sdk", extra = ["http-server"] },
+    { name = "aiohttp" },
+    { name = "fastapi" },
+    { name = "gcsfs" },
+    { name = "google-adk", extra = ["bigquery-analytics", "gcp", "otel-gcp"] },
+    { name = "google-cloud-agentplatform", extra = ["agent-engines"] },
+    { name = "google-cloud-aiplatform", extra = ["evaluation"] },
+    { name = "google-cloud-logging" },
+    { name = "opentelemetry-resourcedetector-gcp" },
+    { name = "protobuf" },
+]
+
+[package.optional-dependencies]
+eval = [
+    { name = "google-adk", extra = ["eval"] },
+    { name = "google-cloud-aiplatform", extra = ["evaluation"] },
+]
+lint = [
+    { name = "codespell" },
+    { name = "ruff" },
+    { name = "ty" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "nest-asyncio" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "a2a-sdk", extras = ["http-server"], specifier = ">=1.0,<2" },
+    { name = "aiohttp", specifier = ">=3.13.4" },
+    { name = "codespell", marker = "extra == 'lint'", specifier = ">=2.2.0,<3.0.0" },
+    { name = "fastapi", specifier = "<0.142.0" },
+    { name = "gcsfs", specifier = ">=2026.10.0" },
+    { name = "google-adk", extras = ["eval"], marker = "extra == 'eval'", specifier = ">=2.12.0,<3.0.0" },
+    { name = "google-adk", extras = ["gcp", "otel-gcp", "bigquery-analytics"], specifier = ">=2.12.0,<3.0.0" },
+    { name = "google-cloud-agentplatform", extras = ["agent-engines"], specifier = ">=2.2.0,<3.0.0" },
+    { name = "google-cloud-aiplatform", extras = ["evaluation"], specifier = ">=2.2.0,<3.0.0" },
+    { name = "google-cloud-aiplatform", extras = ["evaluation"], marker = "extra == 'eval'", specifier = ">=2.2.0,<3.0.0" },
+    { name = "google-cloud-logging", specifier = ">=3.12.0,<4.0.0" },
+    { name = "opentelemetry-resourcedetector-gcp", specifier = "<=1.12.0a0" },
+    { name = "protobuf", specifier = ">=6.31.1,<7.0.0" },
+    { name = "ruff", marker = "extra == 'lint'", specifier = ">=0.4.6,<1.0.0" },
+    { name = "ty", marker = "extra == 'lint'", specifier = ">=0.0.1a0" },
+]
+provides-extras = ["eval", "lint"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "nest-asyncio", specifier = ">=1.6.0,<2.0.0" },
+    { name = "pytest", specifier = ">=9.0.2,<10.0.0" },
+    { name = "pytest-asyncio", specifier = ">=1.0.0,<2.0.0" },
+]
+
+[[package]]
 name = "rouge-score"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3181,7 +3181,7 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/97/5a3609c4f8d58b039179648e62dd220f89864f56f7357f5d4f45c29eb2cc/scipy-1.17.1.tar.gz", hash = "sha256:95d8e012d8cb8816c226aef832200b1d45109ed4464303e997c5b13122b297c0", size = 30573822, upload-time = "2026-02-23T00:26:24.851Z" }
 wheels = [
@@ -3240,7 +3240,7 @@ resolution-markers = [
     "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" } },
+    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7e/74/66de6258867beb2ef08f35f9f2ac017a52cacd5081714d239ff1a442d458/scipy-1.18.1.tar.gz", hash = "sha256:52c4b7422442aba924d03ad4019852b08a92e64ea187b933135687bfe2747307", size = 30781235, upload-time = "2026-08-21T23:28:50.599Z" }
 wheels = [
