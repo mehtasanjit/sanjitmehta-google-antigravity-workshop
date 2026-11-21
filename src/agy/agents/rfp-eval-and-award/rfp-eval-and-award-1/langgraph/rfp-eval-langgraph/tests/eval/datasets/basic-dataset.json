@@ -1,0 +1,16 @@
+{
+  "eval_cases": [
+    {
+      "name": "greeting",
+      "agent_data": {
+        "turns": [
+          {
+            "events": [
+              {"author": "user", "content": {"parts": [{"text": "hello"}]}}
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
